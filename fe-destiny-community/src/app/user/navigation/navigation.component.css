@@ -73,7 +73,7 @@
 }
 .user-avatar.small.no-outline.online.notif-mess {
   width: auto;
-  height: 0px;
+  height: -1px;
 }
 
 p.button.re-fl, p.delete-fl {
@@ -240,4 +240,36 @@ p.user-short-description-title {
 nav#navigation-widget::-webkit-scrollbar {
   width: 0 !important;
   display: none;
+}
+
+.dropdown-box.padding-bottom-small.header-search-dropdown{
+  max-height: 500px !important;
+  height: auto !important;
+  overflow: auto;
+  overflow: -moz-scrollbars-none;
+  -ms-overflow-style: none;
+}
+
+.dropdown-box.padding-bottom-small.header-search-dropdown::-webkit-scrollbar {
+  width: 0 !important;
+  display: none;
+}
+.no-find {
+  text-align: center;
+  font-size: 17px;
+  color: #3e3f5e;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+span.bold{
+  max-width: 416px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+}
+
+/* ==============================dark============================= */
+.dark li.menu-item:not(.active) a.menu-item-link.text-tooltip-tfr:hover i.fa-solid {
+  color: #40d04f !important;
 }

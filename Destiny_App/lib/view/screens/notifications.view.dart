@@ -25,6 +25,11 @@ class _NotificationViewState extends State<NotificationView> {
   void initState() {
     super.initState();
     getConnectivity();
+    setState(() {
+      socketManager.updateListNotify(socketManager.listNotify);
+    });
+
+    // List<NotifyModel> list = socketManager.notifyStream;
   }
 
   late StreamSubscription subscription;
@@ -88,67 +93,89 @@ class _NotificationViewState extends State<NotificationView> {
         automaticallyImplyLeading: false,
         centerTitle: true,
       ),
-      body: Container(
-        child: StreamBuilder<List<NotifyModel>>(
-          stream: socketManager.notifyStream,
-          builder: (BuildContext context,
-              AsyncSnapshot<List<NotifyModel>> snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: CircularProgressIndicator(),
-              );
-            } else if (snapshot.hasData) {
-              return ListView.builder(
-                physics: ClampingScrollPhysics(),
-                padding: EdgeInsets.zero,
-                itemCount: snapshot.data!.length,
-                itemBuilder: (BuildContext context, int index) {
-                  NotifyModel n = snapshot.data![index];
-                  return ListTile(
-                    leading: Container(
-                      height: 50,
-                      width: 50,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(n.avatar),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+      body: ListView.builder(
+        itemCount: socketManager.listNotify.length,
+        itemBuilder: (context, index) {
+          NotifyModel notify = socketManager.listNotify[index];
+
+          Widget subtitleWidget = Text(
+            "Thông báo không xác định",
+            style: TextStyle(color: Colors.grey),
+          );
+
+          if (notify.type == 'COMMENT') {
+            subtitleWidget = Text(
+              "đã bình luận vào bài viết của bạn",
+              style: TextStyle(color: Colors.grey),
+            );
+          } else if (notify.type == 'REPCOMMENT') {
+            subtitleWidget = Text(
+              "đã trả lời bình luận của bạn",
+              style: TextStyle(color: Colors.grey),
+            );
+          } else if (notify.type == 'MENTION') {
+            subtitleWidget = Text(
+              "đã nhắc đến bạn trong một bình luận",
+              style: TextStyle(color: Colors.grey),
+            );
+          } else if (notify.type == 'INTERESTED') {
+            subtitleWidget = Text(
+              "đã thích bài viết của bạn",
+              style: TextStyle(color: Colors.grey),
+            );
+          } else if (notify.type == 'SHARE') {
+            subtitleWidget = Text(
+              "đã chia sẻ bài viết của bạn",
+              style: TextStyle(color: Colors.grey),
+            );
+          } else if (notify.type == 'FOLLOW' &&
+              notify.following_status == true) {
+            subtitleWidget = Text(
+              "đã theo dõi bạn",
+              style: TextStyle(color: Colors.grey),
+            );
+          } else if (notify.type == 'FOLLOW' &&
+              notify.following_status == false) {
+            subtitleWidget = Text(
+              "và bạn đã trở thành bạn bè",
+              style: TextStyle(color: Colors.grey),
+            );
+          }
+
+          return ListTile(
+            leading: Container(
+              height: 50,
+              width: 50,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: NetworkImage(notify.avatar),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            title: Text(
+              notify.fullname,
+              style: TextStyle(color: Colors.black),
+            ),
+            subtitle: subtitleWidget,
+            trailing: notify.type == 'FOLLOW' && notify.following_status == true
+                ? ElevatedButton(
+                    // Button theo dõi
+                    onPressed: () {
+                      // Xử lý khi người dùng nhấn vào button theo dõi
+                    },
+                    child: Text(
+                      'Theo dõi',
+                      style: TextStyle(color: Colors.white),
                     ),
-                    title: Text(
-                      n.fullname,
-                      style: TextStyle(color: Colors.black),
-                    ),
-                    subtitle: Text(
-                      "Bạn có thông báo mới.",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    trailing: hasFollower
-                        ? ElevatedButton(
-                            onPressed: () {
-                              // Handle when the user presses the 'Follow' button
-                            },
-                            child: Text('Theo dõi'),
-                          )
-                        : null,
-                    onTap: () {},
-                    enabled: true,
-                  );
-                },
-                // itemCount: snapshot.data!.length,
-              );
-            } else if (snapshot.hasError) {
-              return Center(
-                child: Text('Error: ${snapshot.error}'),
-              );
-            } else {
-              // Return a default widget if none of the conditions are met
-              return Center(
-                child: Text('No data available'),
-              );
-            }
-          },
-        ),
+                  )
+                : null,
+            onTap: () {
+              // Xử lý khi người dùng nhấn vào thông báo
+            },
+            enabled: true,
+          );
+        },
       ),
     );
   }

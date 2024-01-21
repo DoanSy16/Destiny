@@ -36,10 +36,6 @@ class _RecentChartsState extends State<RecentCharts> {
     // listUser = socketManager.mapUser.values.toList();
     socketManager.userProvider
         .updateUserList(socketManager.mapUser.values.toList());
-    Timer.periodic(Duration(minutes: 1), (timer) {
-      // socketManager.updateMapTime();
-      //  setState(() {});
-    });
   }
 
   late StreamSubscription subscription;
@@ -136,18 +132,30 @@ class _RecentChartsState extends State<RecentCharts> {
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(35),
-                              child: FadeInImage.assetNetwork(
-                                placeholder:
-                                    'http://pluspng.com/img-png/png-user-icon-person-icon-png-people-person-user-icon-2240.png',
-                                image: socketManager
+                              child: Image.network(
+                                socketManager
                                         .userProvider.listUser[index].avatar ??
                                     '',
                                 height: 65,
                                 width: 65,
-                                fit: BoxFit
-                                    .cover, // Có thể điều chỉnh theo yêu cầu của bạn
+                                fit: BoxFit.cover,
                               ),
                             ),
+
+                            // ClipRRect(
+                            //   borderRadius: BorderRadius.circular(35),
+                            //   child: FadeInImage.assetNetwork(
+                            //     placeholder:
+                            //         'http://pluspng.com/img-png/png-user-icon-person-icon-png-people-person-user-icon-2240.png',
+                            //     image: socketManager
+                            //             .userProvider.listUser[index].avatar ??
+                            //         '',
+                            //     height: 65,
+                            //     width: 65,
+                            //     fit: BoxFit
+                            //         .cover, // Có thể điều chỉnh theo yêu cầu của bạn
+                            //   ),
+                            // ),
                             CircleAvatar(
                               radius: 7,
                               backgroundColor: (socketManager
@@ -167,7 +175,7 @@ class _RecentChartsState extends State<RecentCharts> {
                                 socketManager
                                     .userProvider.listUser[index].fullname,
                                 style: TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 16,
                                   color: GlobalColors.mainColor,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -179,7 +187,7 @@ class _RecentChartsState extends State<RecentCharts> {
                                   socketManager
                                       .userProvider.listUser[index].lastMessage,
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 15,
                                     color: Colors.black54,
                                   ),
                                   maxLines: 1,

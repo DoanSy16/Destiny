@@ -10,7 +10,9 @@ import 'package:http/http.dart' as http;
 import 'package:login_signup/models/SocketManager%20.dart';
 import 'package:login_signup/utils/api.dart';
 import 'package:login_signup/utils/gobal.colors.dart';
+import 'package:login_signup/view/bottomnavbar.dart';
 import 'package:login_signup/view/edit_profile.view.dart';
+import 'package:login_signup/view/login.view.dart';
 import 'package:login_signup/view/login_signup_screen.dart';
 import 'package:login_signup/view/widgets/button_screen.dart';
 import 'package:login_signup/view/widgets/post.dart';
@@ -19,6 +21,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -147,9 +150,17 @@ class _ProfileViewState extends State<ProfileView> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
+          centerTitle: true,
+          leading: BackButton(onPressed: () async {
+            SharedPreferences prefs = await SharedPreferences.getInstance();
+            await prefs.setInt('id', socketManager.user_id);
+            runApp(GetMaterialApp(
+              home: BottomNavBar(),
+            ));
+          }),
           title: Text("Trang cá nhân"),
-          backgroundColor: Colors.white,
-          elevation: 0,
+          // backgroundColor: Colors.white,
+          // elevation: 0,
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 10),
@@ -174,8 +185,9 @@ class _ProfileViewState extends State<ProfileView> {
                         if (response.statusCode == 200) {
                           socketManager.logout();
                           await prefs.clear();
+                          socketManager.selectedIndex = 0;
                           runApp(GetMaterialApp(
-                            home: HomeScreen(),
+                            home: LoginView(),
                           ));
                         }
                       },
@@ -202,6 +214,7 @@ class _ProfileViewState extends State<ProfileView> {
               children: [
                 Container(
                   color: Colors.white,
+                  margin: EdgeInsets.only(top: 10),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 55),
                     child: Column(
@@ -332,7 +345,7 @@ class _ProfileViewState extends State<ProfileView> {
               ? Container(
                   color: Colors.black.withOpacity(0.5),
                   child: Center(
-                    child: SpinKitWave(
+                    child: LoadingAnimationWidget.staggeredDotsWave(
                       color: Colors.white,
                       size: 50.0,
                     ),

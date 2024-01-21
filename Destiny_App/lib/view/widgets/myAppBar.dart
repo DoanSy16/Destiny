@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:http/http.dart' as http;
+import 'package:login_signup/utils/api.dart';
 import 'package:quickalert/quickalert.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MyAppBar extends StatefulWidget {
   const MyAppBar({super.key});
@@ -29,12 +31,46 @@ class _MyAppBarState extends State<MyAppBar> {
       QuickAlert.show(
         context: context,
         type: QuickAlertType.confirm,
-        text: 'Do you want to logout',
-        confirmBtnText: 'Yes',
-        cancelBtnText: 'No',
+        text: 'Tiếp tục đăng nhập',
+        confirmBtnText: 'Có',
+        cancelBtnText: 'Không',
         confirmBtnColor: Colors.green,
+        onConfirmBtnTap: () {
+          loginToWeb();
+          Navigator.pop(context);
+        },
       );
     });
+  }
+
+  Future<void> loginToWeb() async {
+    String url = "v1/oauth/login/byweb";
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var value = await prefs.getString('token');
+    var headers = {
+      'Authorization': ' Bearer $value',
+      'Content-Type':
+          'application/x-www-form-urlencoded', // Điều này phụ thuộc vào yêu cầu cụ thể của máy chủ
+    };
+    final response = await http.post(
+      Uri.parse(ApiEndPoints.baseUrl + url),
+      headers: headers,
+      body: _scanBarcode.toString(), // Truyền số trang cần tải
+    );
+
+    if (response.statusCode == 200) {
+      QuickAlert.show(
+          context: context,
+          title: "Thành công",
+          text: "Đăng nhập thành công",
+          type: QuickAlertType.success);
+    } else {
+      QuickAlert.show(
+          context: context,
+          title: "Thất bại",
+          text: "Qúa hạn đăng nhập!",
+          type: QuickAlertType.error);
+    }
   }
 
   @override
@@ -79,6 +115,9 @@ class _MyAppBarState extends State<MyAppBar> {
                           color: Colors.grey[300],
                           borderRadius: BorderRadius.circular(50)),
                       child: InkWell(
+                        onTap: () {
+                          scanQR();
+                        },
                         child: Icon(
                           Icons.qr_code,
                           color: Colors.black87,

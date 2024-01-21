@@ -41,6 +41,9 @@ class _SuccessfulRegistrationDialogState
         List data = jsonDecode(utf8.decode(response.bodyBytes));
         user = data;
       });
+      runApp(GetMaterialApp(
+        home: BottomNavBar(),
+      ));
     }
   }
 
@@ -145,6 +148,9 @@ class _SuccessfulRegistrationDialogState
                       List data = jsonDecode(utf8.decode(response.bodyBytes));
                       user = data;
                     });
+                    runApp(GetMaterialApp(
+                      home: BottomNavBar(),
+                    ));
                   }
                 },
                 child: Text('Tải lại'),

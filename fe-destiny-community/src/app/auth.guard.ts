@@ -22,7 +22,6 @@ export class authGuard implements CanActivate {
         setTimeout(resolve, ms);
       });
     }
-
     const isModRouteChangeMail = /^\/(chang-email-confirm)/.test(state.url);
     if (isModRouteChangeMail) {
       return true;

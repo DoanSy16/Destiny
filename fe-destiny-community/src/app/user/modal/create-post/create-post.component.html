@@ -1,9 +1,10 @@
 <main class="overlay" *ngIf="modalService.isOpenCreatePost$ | async">
   <div class="modal-create-post">
-    <button (click)="closeModalCreatePost()" class="btnClose-create-post">
+    <div (click)="closeModalCreatePost()" class="btnClose-create-post">
       <i class="fa-solid fa-xmark"></i>
-    </button>
-    <div class="modal-body">
+    </div>
+    <app-loading *ngIf="isLoading"></app-loading>
+    <div class="modal-body" id="body-create-post">
       <div class="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
         <div class="mx-auto max-w-270">
           <div
@@ -22,7 +23,7 @@
             <div class="main-form">
               <div class="col-span-5">
                 <div
-                  class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark"
+                  class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark main-create"
                 >
                   <div
                     class="border-b border-stroke py-4 px-7 dark:border-strokedark"
@@ -68,8 +69,8 @@
                             id="viewer"
                             formControlName="post_status"
                             class="w-full rounded border border-stroke bg-gray py-3 pl-11.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                              [ngModel]="true"
-                            >
+                            [ngModel]="true"
+                          >
                             <option value="true">Công khai</option>
                             <option value="false">Riêng tư</option>
                           </select>
@@ -91,11 +92,13 @@
                         />
                         <span
                           *ngIf="
-                            createPostForm.get('product')?.invalid &&
-                            createPostForm.get('product')?.touched
+                            (createPostForm.get('product')?.invalid &&
+                              createPostForm.get('product')?.touched) ||
+                            (createPostForm.get('product')?.invalid &&
+                              submitted)
                           "
                         >
-                          <div style="color: red">
+                          <div style="color: red" class="noftify-error">
                             Vui lòng nhập tên sản phẩm!
                           </div>
                         </span>
@@ -118,7 +121,7 @@
                       <span
                         *ngIf="
                           createPostForm.get('hash_tag')?.invalid &&
-                          createPostForm.get('hash_tag')?.touched
+                          (createPostForm.get('hash_tag')?.touched || submitted)
                         "
                       >
                         <div
@@ -133,18 +136,17 @@
                             "
                             style="color: red"
                           >
-                            Vui lòng nhập hashtag
+                            Vui lòng nhập hashtag!
                           </div>
                           <div
                             *ngIf="
                               createPostForm
                                 .get('hash_tag')
-                                ?.hasError('pattern')
+                                ?.getError('pattern')
                             "
                             style="color: red"
                           >
-                            Vui lòng kiểm tra hashtag theo đúng định dạng (VD:
-                            #davisy)
+                            Vui lòng nhập đúng hashtag (#abc)
                           </div>
                         </div>
                       </span>
@@ -197,6 +199,11 @@
                           formControlName="content"
                         >
                         </textarea>
+                        <span *ngIf="checkBadWord">
+                          <div style="color: red" class="noftify-error">
+                            Từ ngữ của bạn đã vi phạm nguyên tắc cộng đồng!
+                          </div>
+                        </span>
                       </div>
                     </div>
                     <div class="address">
@@ -228,7 +235,7 @@
                             [items]="provinces"
                             [clearable]="false"
                             formControlName="province_name"
-                            [ngModel]="dataEditProfile.province_name"
+                            [ngModel]="dataEditProfile?.province_name!"
                             (change)="getProvinceName()"
                             required
                           ></ng-select>
@@ -247,7 +254,7 @@
                             [clearable]="false"
                             formControlName="district_name"
                             class="form-controlP"
-                            [ngModel]="dataEditProfile.district_name"
+                            [ngModel]="dataEditProfile?.district_name"
                             required
                             (change)="getDistrictName()"
                           ></ng-select>
@@ -265,7 +272,7 @@
                           [items]="wards"
                           [clearable]="false"
                           formControlName="ward_name"
-                          [ngModel]="dataEditProfile.ward_name"
+                          [ngModel]="dataEditProfile?.ward_name"
                           class="form-controlP"
                           required
                         ></ng-select>
@@ -277,7 +284,7 @@
 
               <div class="col-span-5">
                 <div
-                  class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark"
+                  class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark main-create"
                 >
                   <div
                     class="border-b border-stroke py-4 px-7 dark:border-strokedark"

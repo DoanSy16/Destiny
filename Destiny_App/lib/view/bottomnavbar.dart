@@ -1,3 +1,4 @@
+import 'package:login_signup/models/SocketManager%20.dart';
 import 'package:login_signup/utils/gobal.colors.dart';
 import 'package:login_signup/view/screens/screen1.dart';
 import 'package:login_signup/view/screens/screen2.dart';
@@ -18,10 +19,11 @@ class BottomNavBar extends StatefulWidget {
 }
 
 class _BottomNavBarState extends State<BottomNavBar> {
-  int _selectedIndex = 0;
+  late SocketManager socketManager = SocketManager();
+
   void setSelectedIndex(int index) {
     setState(() {
-      _selectedIndex = index;
+      socketManager.selectedIndex = index;
     });
   }
 
@@ -39,7 +41,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
       extendBody: true,
       backgroundColor: Colors.red,
       bottomNavigationBar: CurvedNavigationBar(
-        index: _selectedIndex,
+        index: socketManager.selectedIndex,
         backgroundColor: Colors.transparent,
         items: const [
           Icon(
@@ -70,11 +72,11 @@ class _BottomNavBarState extends State<BottomNavBar> {
         ],
         onTap: (index) {
           setState(() {
-            _selectedIndex = index;
+            socketManager.selectedIndex = index;
           });
         },
       ),
-      body: screens[_selectedIndex],
+      body: screens[socketManager.selectedIndex],
     );
   }
 }

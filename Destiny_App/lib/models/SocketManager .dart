@@ -5,26 +5,29 @@ import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image/image.dart';
+import 'package:http/http.dart' as http;
 import 'package:login_signup/models/ApiManager.dart';
 import 'package:login_signup/models/UserModel.dart';
 import 'package:login_signup/models/MessagesModel.dart';
 import 'package:login_signup/provider/UserProvider.dart';
 import 'package:login_signup/utils/api.dart';
 import 'package:login_signup/view/bottomnavbar.dart';
+import 'package:login_signup/view/login_signup_screen.dart';
 import 'package:stomp_dart_client/stomp.dart' as stomp;
 import 'package:stomp_dart_client/stomp_frame.dart' as stomp;
 import 'package:stomp_dart_client/stomp_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login_signup/models/NotifyModel.dart';
+import 'package:quickalert/quickalert.dart';
 
-class SocketManager {
+class SocketManager extends ChangeNotifier {
   static final SocketManager _instance = SocketManager._internal();
   factory SocketManager() {
     return _instance;
   }
 
   SocketManager._internal();
-  late BuildContext? context;
+  late BuildContext context;
   late Function(BuildContext) onChatSampleReset;
 
   void resetChatSample(BuildContext context) {
@@ -49,13 +52,15 @@ class SocketManager {
   bool checkScroll = false;
   int repCmtId = 0;
   String emailRegister = "";
-
+  int selectedIndex = 0;
+  int userIdImage = 0;
   Map<String, UserModel> mapUser = new Map<String, UserModel>();
   Map<int, NotifyModel> mapNotifycation = new Map<int, NotifyModel>();
   Map<String, String> mapTime = new Map<String, String>();
   Map<int, String> mapTimeNotify = new Map<int, String>();
   Map<int, String> mapMention = new Map<int, String>();
   List<MessagesModel> listMessages = [];
+  List<NotifyModel> listNotify = [];
   ScrollController scrollController = ScrollController();
   StreamController<List<MessagesModel>> _messagesStreamController =
       StreamController<List<MessagesModel>>.broadcast();
@@ -98,6 +103,15 @@ class SocketManager {
     _userStreamController.add(user);
   }
 
+  void checkConnected() {
+    if (stompClientMessages.connected || stompClientNotification.connected) {
+      isConnected = true;
+    } else {
+      isConnected = false;
+      connectWebSocket();
+    }
+  }
+
   void connectedRegister(String email) {
     this.emailRegister = email;
     stompClientRegister = stomp.StompClient(
@@ -126,9 +140,9 @@ class SocketManager {
   void connectWebSocket() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     user_id = await prefs.getInt('id') ?? 0;
-    if (isConnected) {
-      return; // Already connected, no need to reconnect
-    }
+    // if (isConnected) {
+    //   return; // Already connected, no need to reconnect
+    // }
     final socketUrl = ApiEndPoints.baseUrl + 'chat';
     stompClientMessages = stomp.StompClient(
       config: StompConfig.sockJS(
@@ -156,135 +170,159 @@ class SocketManager {
   }
 
   void onConnectCallbackNotyfication(stomp.StompFrame frame) async {
-    // SharedPreferences prefs = await SharedPreferences.getInstance();
-    // user_id = await prefs.getInt('id') ?? 0;
+    if (stompClientNotification.connected) {
+      stompClientNotification.subscribe(
+          destination: "/topic/loaddata/notification/$user_id",
+          callback: (stomp.StompFrame frame) {
+            String? data = frame.body;
+            print('notifycation: ' + data.toString());
+            List<dynamic> datajson = json.decode(data!);
 
-    stompClientNotification.subscribe(
-        destination: "/topic/loaddata/notification/$user_id",
-        callback: (stomp.StompFrame frame) {
-          String? data = frame.body;
-          print('notifycation: ' + data.toString());
-          List<dynamic> datajson = json.decode(data!);
-          // Map<String, dynamic> datajson = json.decode(data!);
-          List<NotifyModel> list = [];
-          for (var k in datajson) {
-            print("kkkkkkk: " + k.toString());
-            list.add(notifymodel(k));
-
-            mapNotifycation[this.count_notify] = notifymodel(k);
-            this.count_notify++;
-          }
-
-          print("list: " + list.toString());
-          updateListNotify(list);
-
-          print("stream: " + notifyStream.length.toString());
-          print('length notify: ' + mapNotifycation.length.toString());
-        });
-    stompClientNotification.subscribe(
-        destination: "/topic/success-notification",
-        callback: (stomp.StompFrame frame) {
-          String? data = frame.body;
-          apiManager.fetchComments(int.parse(data.toString()));
-        });
-    stompClientNotification.subscribe(
-        destination: "/topic/loaddata/suggest-post/$user_id",
-        callback: (stomp.StompFrame frame) {
-          return runApp(GetMaterialApp(
-            home: BottomNavBar(),
-          ));
-        });
-    stompClientNotification.send(
-      destination: '/app/load/notification/$user_id',
-    );
+            for (var k in datajson) {
+              print("kkkkkkk: " + k.toString());
+              listNotify.add(notifymodel(k));
+            }
+          });
+      stompClientNotification.subscribe(
+          destination: "/topic/success-notification",
+          callback: (stomp.StompFrame frame) {
+            String? data = frame.body;
+            apiManager.fetchComments(int.parse(data.toString()));
+          });
+      stompClientNotification.subscribe(
+          destination: "/topic/loaddata/suggest-post/$user_id",
+          callback: (stomp.StompFrame frame) {
+            return runApp(GetMaterialApp(
+              home: BottomNavBar(),
+            ));
+          });
+      stompClientNotification.subscribe(
+          destination: "/topic/notify/user/ban/$user_id",
+          callback: (stomp.StompFrame frame) {
+            autoLogout();
+            showAlertError();
+          });
+      stompClientNotification.send(
+        destination: '/app/load/notification/$user_id',
+      );
+    }
   }
-  // stomp.StompClient getSocket() {
-  //   return stompClientMessages;
-  // }
+
+  void autoLogout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var value = await prefs.getString('token');
+    var id = await prefs.getInt('id');
+    var headers = {
+      'Authorization': 'Bearer $value',
+      'Content-Type': 'application/json',
+    };
+    http.Response response;
+    response = await http.get(
+      Uri.parse(ApiEndPoints.baseUrl + "v1/user/logout/chat/$id"),
+      headers: headers,
+    );
+    if (response.statusCode == 200) {
+      logout();
+      await prefs.clear();
+      runApp(GetMaterialApp(
+        home: HomeScreen(),
+      ));
+    }
+  }
+
+  void showAlertError() {
+    QuickAlert.show(
+        context: context,
+        title: "Tài khoản của bạn đã bị khóa!",
+        text: "Vui lòng liên hệ quản trị viên để được hỗ trợ !",
+        type: QuickAlertType.error);
+  }
 
   void onConnectCallback(stomp.StompFrame frame) async {
     isConnected = true;
-    stompClientMessages.subscribe(
-      destination: '/topic/messages/$user_id',
-      callback: (stomp.StompFrame frame) {
-        String? data = frame.body;
-        if (data != null) {
-          List<dynamic> datajson = json.decode(data);
-          Map<String, dynamic> map = datajson[0];
-          bool type = false;
-          int from_user_id = int.parse(map['user_id'].toString());
-          if (this.userChatPage.user_id == from_user_id) {
-            type = true;
+    if (stompClientMessages.connected) {
+      stompClientMessages.subscribe(
+        destination: '/topic/messages/$user_id',
+        callback: (stomp.StompFrame frame) {
+          String? data = frame.body;
+          if (data != null) {
+            List<dynamic> datajson = json.decode(data);
+            Map<String, dynamic> map = datajson[0];
+            bool type = false;
+            int from_user_id = int.parse(map['user_id'].toString());
+            if (this.userChatPage.user_id == from_user_id) {
+              type = true;
+              listMessages.add(messagesModel(map));
+              updateListMessages(listMessages);
+            } else {
+              type = false;
+            }
+            int to_user_id = this.userChatPage.user_id;
+            stompClientMessages.send(
+              destination:
+                  '/app/reload/messages/$type/$from_user_id/$to_user_id',
+            );
+          }
+        },
+      );
+
+      stompClientMessages.subscribe(
+        destination: '/topic/status/messages/$user_id',
+        callback: (stomp.StompFrame frame) {
+          String? data = frame.body;
+          if (data != null) {
+            Map<String, dynamic> map = jsonDecode(data);
+            print("Map : " + map.toString());
             listMessages.add(messagesModel(map));
             updateListMessages(listMessages);
-          } else {
-            type = false;
+            bool type = false;
+            int to_user_id = this.userChatPage.user_id;
+            this.scrollToBottom();
+            stompClientMessages.send(
+              destination: '/app/reload/messages/$type/$to_user_id/$user_id',
+            );
           }
-          int to_user_id = this.userChatPage.user_id;
-          stompClientMessages.send(
-            destination: '/app/reload/messages/$type/$from_user_id/$to_user_id',
-          );
-        }
-      },
-    );
+        },
+      );
 
-    stompClientMessages.subscribe(
-      destination: '/topic/status/messages/$user_id',
-      callback: (stomp.StompFrame frame) {
-        String? data = frame.body;
-        if (data != null) {
-          Map<String, dynamic> map = jsonDecode(data);
-          listMessages.add(messagesModel(map));
-          updateListMessages(listMessages);
-          bool type = false;
-          int to_user_id = this.userChatPage.user_id;
-          this.scrollToBottom();
-          stompClientMessages.send(
-            destination: '/app/reload/messages/$type/$to_user_id/$user_id',
-          );
-        }
-      },
-    );
+      // Subscribe đến một topic
+      stompClientMessages.subscribe(
+        destination: '/topic/public',
+        callback: (stomp.StompFrame frame) {
+          String? data = frame.body;
 
-    // Subscribe đến một topic
-    stompClientMessages.subscribe(
-      destination: '/topic/public',
-      callback: (stomp.StompFrame frame) {
-        // Xử lý tin nhắn nhận được từ topic
-        // print('Received STOMP Message: ${frame.body}');
-        String? data = frame.body;
-
-        Map<String, dynamic> datajson = json.decode(data!);
-        List<UserModel> list = [];
-        for (var key in datajson.keys) {
-          if (key == user_id.toString()) {
-            var value = datajson[key];
-            for (var v in value) {
-              UserModel model = new UserModel();
-              model.type = v['type'].toString();
-              model.user_id = int.parse(v['user_id'].toString());
-              model.username = v['username'];
-              model.fullname = v['fullname'];
-              model.email = v['email'];
-              model.avatar = v['avatar'].toString();
-              model.messageUnRead = int.parse(v['messageUnRead'].toString());
-              model.lastMessage = v['lastMessage'];
-              model.online = customTime(v['online'], 0);
-              model.isFriend = bool.parse(v['friend'].toString());
-              list.add(model);
-              mapUser[v['user_id'].toString()] = model;
-              mapTime[v['user_id'].toString()] = model.online;
+          Map<String, dynamic> datajson = json.decode(data!);
+          List<UserModel> list = [];
+          for (var key in datajson.keys) {
+            if (key == user_id.toString()) {
+              var value = datajson[key];
+              for (var v in value) {
+                UserModel model = new UserModel();
+                model.type = v['type'].toString();
+                model.user_id = int.parse(v['user_id'].toString());
+                model.username = v['username'];
+                model.fullname = v['fullname'];
+                model.email = v['email'];
+                model.avatar = v['avatar'].toString();
+                model.messageUnRead = int.parse(v['messageUnRead'].toString());
+                model.lastMessage = v['lastMessage'];
+                model.online = customTime(v['online'], 0);
+                model.isFriend = bool.parse(v['friend'].toString());
+                list.add(model);
+                mapUser[v['user_id'].toString()] = model;
+                mapTime[v['user_id'].toString()] = model.online;
+              }
             }
           }
-        }
-        userProvider.updateUserList(mapUser.values.toList());
-        // this.updateListUser(list);
-
-        // _streamController.add(frame.body!);
-      },
-    );
+          Timer.periodic(Duration(seconds: 5), (timer) {
+            checkConnected();
+          });
+          userProvider.updateUserList(mapUser.values.toList());
+          notifyListeners();
+        },
+      );
+    }
     logout();
-    // stompClientMessages.send(destination: '/app/fetchAllUsers');
   }
 
   void logout() {
@@ -293,35 +331,30 @@ class SocketManager {
 
   MessagesModel messagesModel(Map<dynamic, dynamic> messages) {
     MessagesModel model = MessagesModel();
-    try {
-      if (messages.containsKey('id')) {
-        model.id = int.tryParse(messages['id'].toString()) ?? 0;
-      }
-      model.content = messages['content'] ?? '';
-      model.send_time = getCustomTime(messages['send_time']).toString();
-      if (messages.containsKey('user_id')) {
-        model.user_id = int.tryParse(messages['user_id'].toString()) ?? 0;
-      }
-      model.avatar = messages['avatar'];
-      if (messages.containsKey('chat_parcipants_status')) {
-        model.chat_parcipants_status = bool.fromEnvironment(
-                messages['chat_parcipants_status'].toString()) ??
-            false;
-      }
-      // model.day = messages['day'] ?? '';
-      model.day = (messages['day'] != null)
-          ? checkDate(messages['day'].toString())
-          : '';
-      model.type = messages['type'];
-      if (messages.containsKey('recall')) {
-        model.recall =
-            bool.fromEnvironment(messages['recall'].toString()) ?? false;
-      }
-      model.images = (messages['images'] == null) ? [] : messages['images'];
-      return model;
-    } catch (e) {
-      print("Error during conversion: " + e.toString());
+
+    if (messages.containsKey('id')) {
+      model.id = int.tryParse(messages['id'].toString()) ?? 0;
     }
+    model.content = messages['content'] ?? '';
+    model.send_time = getCustomTime(messages['send_time']).toString();
+    if (messages.containsKey('user_id')) {
+      model.user_id = int.tryParse(messages['user_id'].toString()) ?? 0;
+    }
+    model.avatar = messages['avatar'];
+    if (messages.containsKey('chat_parcipants_status')) {
+      model.chat_parcipants_status =
+          bool.fromEnvironment(messages['chat_parcipants_status'].toString()) ??
+              false;
+    }
+    // model.day = messages['day'] ?? '';
+    model.day =
+        (messages['day'] != null) ? checkDate(messages['day'].toString()) : '';
+    model.type = messages['type'];
+    if (messages.containsKey('recall')) {
+      model.recall =
+          bool.fromEnvironment(messages['recall'].toString()) ?? false;
+    }
+    model.images = (messages['images'] == null) ? [] : messages['images'];
     return model;
   }
 
@@ -394,22 +427,6 @@ class SocketManager {
         'mapMention': mapMention
       }),
     );
-
-    // // cập nhật số liệu cmt và share
-    // let comment = document.getElementById("cmt-" + post_id);
-    // let share = document.getElementById("share-" + post_id);
-    // if (type == 'COMMENT' && comment) {
-    //   let count: string | undefined;
-    //   count = '' + comment.textContent?.trim();
-    //   let num = parseInt(count) + 1;
-    //   comment!.innerText = num + ' Bình luận';
-    // }
-    // if (type == 'SHARE' && share) {
-    //   let count: string | undefined;
-    //   count = '' + share.textContent?.trim();
-    //   let num = parseInt(count) + 1;
-    //   share!.innerText = num + ' Chia sẻ';
-    // }
   }
 
   void addComment(
@@ -473,14 +490,11 @@ class SocketManager {
     DateTime currentDate = DateTime.now();
     String checkTime = '';
 
-    // Tìm ngày đầu tiên trong tuần (ngày chủ nhật)
     DateTime firstDayOfWeek =
         currentDate.subtract(Duration(days: currentDate.weekday));
 
-    // Tìm ngày cuối cùng trong tuần (ngày thứ bảy)
     DateTime lastDayOfWeek = firstDayOfWeek.add(Duration(days: 6));
 
-    // Định dạng ngày thành chuỗi
     String startDate = firstDayOfWeek.toIso8601String().substring(0, 10);
     String endDate = lastDayOfWeek.toIso8601String().substring(0, 10);
 
@@ -511,10 +525,8 @@ class SocketManager {
         'Th6',
         'Th7'
       ];
-      // Lấy thứ của ngày (0 = Chủ Nhật, 1 = Thứ Hai, 2 = Thứ Ba, v.v.)
       int dayOfWeek = dateTemp.weekday -
           1; // Trừ 1 để chuyển sang đúng index trong mảng daysOfWeek
-      // Trả về tên thứ
       return daysOfWeek[dayOfWeek] + checkTime;
     } else if (check > 0) {
       if (int.parse(year) <= currentDate.year) {

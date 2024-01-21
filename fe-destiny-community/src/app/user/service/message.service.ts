@@ -1,7 +1,8 @@
+import { data } from 'jquery';
 import { Injectable, EventEmitter } from '@angular/core';
 import { tap, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, Observable, of } from 'rxjs';
 import '../../../assets/toast/main.js';
@@ -11,7 +12,6 @@ import Stomp from 'stompjs';
 import * as Handlebars from 'handlebars';
 import { UserModel } from '../Model/UserModel.js';
 import { environment } from '../../../environments/environment';
-
 @Injectable({
   providedIn: 'root',
 })
@@ -19,11 +19,18 @@ export class MessageService {
   private loadDataChat = environment.baseUrl + 'v1/user/registrationchat';
   private loadDataMess = environment.baseUrl + 'v1/user/chat/load/messages';
   private ChatWithStrangersUrl = environment.baseUrl + 'v1/user/inbox';
+  private blockUrl = environment.baseUrl + 'v1/user/block/chat';
+  private messageRecallUrl = environment.baseUrl + 'v1/user/chat/recall/messages';
+  private loadImages = environment.baseUrl + 'v1/user/messages/load/images';
+  private checkBlockUrl = environment.baseUrl + 'v1/user/messages/check/block';
 
   private sender: any[] = [];
   private listFriends: any[] = [];
   private listMess: any[] = [];
-
+  public listMessages: any[] = [];
+  public listImages:any[] = [];
+  public listImagesSeeAll:any[] = [];
+  listMessagesTemp :any[]=[];
   isLoading = true;
 
   socket?: WebSocket;
@@ -36,6 +43,7 @@ export class MessageService {
   messageTo: string;
   usersTemplateHTML = '';
   dataUpdated = new EventEmitter<void>();
+  dataUpdatedMessages = new EventEmitter<void>();
   mapUser = new Map<string, UserModel>();
   newMapUser = new Map<string, UserModel>();
   mapTime = new Map<string, string>();
@@ -43,7 +51,10 @@ export class MessageService {
   mapNotification = new Map<string, boolean>();
   checkConnected: boolean = false;
   isOriginal: boolean = true;
+  loaddingBall: boolean = false;
   public notif_mess: boolean = false;
+  checkScroll: number = 1;
+
 
   constructor(
     private http: HttpClient,
@@ -61,16 +72,33 @@ export class MessageService {
     );
   }
 
-  loadMessage(data: string) {
-    return this.http.post<string>(this.loadDataMess, data).pipe(
-      tap((res) => {
-        this.listMess = JSON.parse(JSON.stringify(res));
-        this.setListMess(this.listMess);
-      }),
-      catchError((err) => of([]))
-    );
+  async loadMessageImg(to: number) {
+    const params = new HttpParams()
+    .set('to', to.toString())  // Convert 'to' to a string
+    try {
+      this.listImagesSeeAll = await this.http.post<any>(this.loadImages, null, { params }).toPromise();
+      // this.setDataPostNf(response);
+      return this.listImagesSeeAll;
+    } catch (error) {
+      console.log("error: " + error);
+      throw error;
+    }
   }
-  // ChatWithStrangersUrl
+
+  async loadMessage(to: number, page: number) {
+    const params = new HttpParams()
+    .set('to', to.toString())  // Convert 'to' to a string
+    .set('page', page.toString());
+    try {
+      this.listMess = await this.http.post<any>(this.loadDataMess, null, { params }).toPromise();
+      // this.setDataPostNf(response);
+      return this.listMess;
+    } catch (error) {
+      console.log("error: " + error);
+      throw error;
+    }
+  }
+  
   createChatWithStrangersApi(data: string) {
     return this.http.post<string>(this.ChatWithStrangersUrl, data).pipe(
       tap(() => {
@@ -110,6 +138,32 @@ export class MessageService {
     });
   }
 
+  // checkUserBlock: boolean = false;
+  blockApi(data: number, status: boolean) {
+    const params = new HttpParams()
+      .set('to', data) // Chuyển số nguyên thành chuỗi
+      .set('status', status)
+    return this.http.get<any>(this.blockUrl, { params }).pipe(
+      tap((res) => {
+        this.listMess = JSON.parse(JSON.stringify(res));
+        this.setListMess(this.listMess);
+      })
+    );
+  }
+
+
+  checkBlockApi(from: number, to: number) {
+    const params = new HttpParams()
+    .set('from', from.toString())  // Convert 'to' to a string
+    .set('to', to.toString());
+    try {
+      return this.http.post<any>(this.checkBlockUrl, null, { params }).toPromise();
+    } catch (error) {
+      console.log("error: " + error);
+      throw error;
+    }
+  }
+
   /* ============Connect socket============= */
   connectToChat(userId) {
     // localStorage.setItem("chatUserId", userId);
@@ -119,37 +173,78 @@ export class MessageService {
       // console.log('connected to: ' + frame);
       this.stompClient!.subscribe('/topic/messages/' + userId, (response) => {
         let data = JSON.parse(response.body);
+        console.warn("data: " + response.body);
+        console.warn("data2: " + data.user_id);
         let type = false; // Thay đổi giá trị "your_type_value" bằng giá trị thực tế của biến "type"
-        let from_user_id = data.fromLogin;
+        let from_user_id = data[0].user_id;
         let to_user_id = localStorage.getItem('chatUserId');
-        if (this.mapTime.has(data.fromLogin)) {
-          this.mapTime.set(data.fromLogin, new Date().toISOString());
+        if (this.mapTime.has(from_user_id)) {
+          this.mapTime.set(from_user_id, new Date().toISOString());
         }
-        if (this.selectedUser == data.fromLogin && this.isOriginal == false) {
-          this.render(data.message, data.fromLogin, data.avatar);
+        if (this.selectedUser == from_user_id && this.isOriginal == false) {
+          this.listMessages.push(data[0]);
+          // this.updateDataMessages();
           type = true;
+          
         } else {
           type = false;
           let audio = new Audio();
           audio.src = '../../../assets/js/sound/notify.mp3';
           audio.play();
           this.notif_mess = true;
-          this.newMessage.set(data.fromLogin, {
-            message: data.message,
-            avatar: data.avatar,
-          });
         }
         this.stompClient!.send(`/app/reload/messages/${type}/${from_user_id}/${to_user_id}`);
       });
-      this.stompClient!.subscribe('/topic/statusmessages/' + userId, (response) => {
+      this.stompClient!.subscribe('/topic/status/messages/' + userId, (response) => {
+        // let data1 = JSON.parse(JSON.stringify(response));
         let data = JSON.parse(response.body);
-        if (data == true) {
+       this.listMessages = [...this.listMessages, ... JSON.parse('['+JSON.stringify(response)+']')];
+       this.loaddingBall = false;
+        if (data != null) {
           let type = false; // Thay đổi giá trị "your_type_value" bằng giá trị thực tế của biến "type"
           let to_user_id = this.selectedUser;
           this.stompClient!.send(`/app/reload/messages/${type}/${to_user_id}/${userId}`);
         }
+        this.$chatHistory = $('.chat-widget-conversation')!;
+        this.$chatHistory.scrollTop(this.$chatHistory[0]!.scrollHeight);
 
       })
+      
+      this.stompClient!.subscribe('/topic/status/messages/' + userId, (response) => {
+        let data = JSON.parse('['+response.body+']');
+        this.listMessages = [...this.listMessages, ...data];
+        this.loaddingBall = false;
+        if (data != null) {
+          let type = false; // Thay đổi giá trị "your_type_value" bằng giá trị thực tế của biến "type"
+          let to_user_id = this.selectedUser;
+          this.stompClient!.send(`/app/reload/messages/${type}/${to_user_id}/${userId}`);
+        }
+        this.$chatHistory = $('.chat-widget-conversation')!;
+        this.$chatHistory.scrollTop(this.$chatHistory[0]!.scrollHeight);
+
+      })
+
+      this.stompClient!.subscribe('/topic/recall/messages/' + userId, (response) => {
+        let data = JSON.parse(response.body);
+        let type = false;
+        let to_user_id = this.selectedUser;
+        if (to_user_id == data[2]) {
+          // this.listMessages.splice(data[1], 1, ...data[0]);
+          this.listMessages[data[1]]=data[0];
+          type = true;
+        }
+        this.stompClient!.send(`/app/reload/messages/${type}/${to_user_id}/${userId}`);
+      });
+
+      this.stompClient!.subscribe('/topic/block/messages/' + userId, (response) => {
+        let data = JSON.parse(response.body);
+        this.$chatHistory = $('.chat-widget-conversation');
+        this.$chatHistory.append(
+          '<div class="notify-block" style="text-align: center;font-size: 14px;font-family: Helvetica, Arial, sans-serif;color: red;font-weight: 700;">Bạn đã bị chặn!</div>'
+        );
+        this.loaddingBall = false;
+      });
+
       this.stompClient!.subscribe('/topic/public', (response) => {
         let data = JSON.parse(response.body);
         this.setFriend([]);
@@ -172,8 +267,8 @@ export class MessageService {
                 lastMessage: v.lastMessage,
                 online: this.customTime(v.online, 0),
                 isFriend: v.friend,
-                hide: v.hide,
-                status: v.status,
+                typeMessage: v.typeMessage,
+                recall: v.recall
               };
               // Thêm người dùng vào danh sách của key trong map
               this.newMapUser.set(v.user_id, user);
@@ -211,6 +306,18 @@ export class MessageService {
     this.isLoading = false;
   }
 
+  async messageRecallApi(id: number, position: number, from: number, to: number): Promise<any> {
+    const url = `${this.messageRecallUrl}/${id}/${position}/${from}/${to}`
+    try {
+      let response = await this.http.get<any>(url).toPromise();
+      return response
+    } catch (error) {
+      console.log("error: " + error);
+      throw error;
+    }
+  }
+
+  // Load lại trạng thái off cho nhắn tin
   logout() {
     this.stompClient!.send('/app/fetchAllUsers');
   }
@@ -222,14 +329,23 @@ export class MessageService {
     this.dataUpdated.emit();
   }
 
-  sendMsg(from, text, img) {
+  updateDataMessages() {
+    // Thực hiện cập nhật dữ liệu ở đây.
+    // Sau khi cập nhật xong, thông báo sự kiện.
+    this.dataUpdatedMessages.emit();
+  }
+
+  sendMsg(from, text, img, typeMessage, images) {
+
     this.stompClient!.send(
       '/app/chat/' + this.selectedUser,
       {},
       JSON.stringify({
         fromLogin: from,
         message: text,
-        avatar: img
+        avatar: img,
+        typeMessage: typeMessage,
+        linkImages: images
       })
     );
     let textLastMess = document.getElementById(
@@ -243,6 +359,11 @@ export class MessageService {
     this.mapTime.set(this.selectedUser + '', new Date().toISOString() + '');
 
   }
+
+
+
+ 
+
 
   render(message, userName, img) {
     setTimeout(() => {
@@ -307,40 +428,24 @@ export class MessageService {
     let month = date2.getMonth() + 1; // Lấy tháng (0-11), nên cộng thêm 1
     let year = date2.getFullYear();
     let date3 = new Date(year + '-' + month + '-' + day);
-    if (date1 < date3) {
+    let time1 = date2.getTime();
+    let time2 = date1.getTime();
+    let timeDifference = Math.abs(time1 - time2);
+    let milliseconds = timeDifference % 1000;
+    let minutes = Math.floor((timeDifference / (1000 * 60)) % 60);
+    let hours = Math.floor(timeDifference / (1000 * 60 * 60));
+
+    if (date1 < date3 && hours>24) {
       dateTime = this.getDayOfWeek(time, check);
       return dateTime;
-    } else if (date1 > date2) {
+    } else if (date1 > date2&& hours>24) {
       return '';
     } else {
-      let date = new Date();
-      let date1 = new Date(time);
-
-      // Lấy thời gian ở dạng milliseconds từ epoch (1/1/1970)
-      let time1 = date.getTime();
-      let time2 = date1.getTime();
-
-      // Tính toán khoảng thời gian (đơn vị milliseconds)
-      let timeDifference = Math.abs(time1 - time2); // Lấy giá trị tuyệt đối để đảm bảo giá trị luôn là dương
-
-      // Chuyển khoảng thời gian thành giờ, phút, giây, và mili giây (tùy ý)
-      let milliseconds = timeDifference % 1000;
-      // let seconds = Math.floor((timeDifference / 1000) % 60);
-      let minutes = Math.floor((timeDifference / (1000 * 60)) % 60);
-      let hours = Math.floor(timeDifference / (1000 * 60 * 60));
       if (hours == 0) {
         return minutes + 'p trước';
       } else {
         return hours + 'h trước';
       }
-      // let regex = /(\d{2}:\d{2})/;
-      // let match = time.match(regex);
-      // if (match) {
-      //   let extractedTime = match[1]; // Extracted "15:43"
-      //   return extractedTime;
-      // } else {
-      //   return null;
-      // }
     }
   }
 

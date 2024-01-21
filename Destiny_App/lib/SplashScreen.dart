@@ -8,6 +8,7 @@ import 'package:login_signup/models/SocketManager%20.dart';
 import 'package:login_signup/utils/api.dart';
 import 'package:login_signup/utils/gobal.colors.dart';
 import 'package:login_signup/view/bottomnavbar.dart';
+import 'package:login_signup/view/login.view.dart';
 import 'package:login_signup/view/login_signup_screen.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:http/http.dart' as http;
@@ -27,20 +28,19 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     Timer(
         const Duration(
-            seconds: 10), // Adjust  the  duration according to requirements.
+            seconds: 2), // Adjust  the  duration according to requirements.
         // For Navigation
         () async {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      String email = prefs.getString('email').toString();
-      String password = prefs.getString('password').toString();
-      print('email: ' + email);
-      print('pass: ' + password);
-      if (email != "null" && password != "null") {
-        // print('object');
-        login(email, password);
+      String token = prefs.getString('token').toString();
+      if (token != "null") {
+        manager.connectWebSocket();
+        runApp(GetMaterialApp(
+          home: BottomNavBar(),
+        ));
       } else {
         runApp(GetMaterialApp(
-          home: HomeScreen(),
+          home: LoginView(),
         ));
       }
     });
@@ -87,8 +87,8 @@ class _SplashScreenState extends State<SplashScreen> {
           // String avatar = data['avatar'];
           SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('token', token);
-          await prefs.setInt('id', id);
-          // await prefs.setString('fullname', fullname);
+          await prefs.setInt(
+              'id', id); // await prefs.setString('fullname', fullname);
           // await prefs.setString('avatar', avatar);
           await prefs.setBool('isLoggedIn', true);
           await prefs.setInt('user', 1);

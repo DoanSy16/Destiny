@@ -1,7 +1,7 @@
 <app-navigation></app-navigation>
 
 <!-- CONTENT GRID -->
-<app-loading *ngIf="isLoading"></app-loading>
+<!-- <app-loading *ngIf="isLoading"></app-loading> -->
 <div class="content-grid" id="body-edit">
   <app-header-profile></app-header-profile>
 
@@ -86,14 +86,14 @@
           <!-- SIDEBAR BOX FOOTER -->
           <div class="sidebar-box-footer">
             <!-- BUTTON -->
-            <button class="button primary" type="submit">Lưu thay đổi</button>
+            <button class="button primary" type="submit" [disabled]="!this.profileForm.valid">Lưu thay đổi</button>
             <!-- /BUTTON -->
            
             <!-- BUTTON -->
             <div class="btn-action">
               <!-- <br> -->
               <p class="button white cancel" (click)="cancelEdit()">Hủy</p>
-              <p class="button white small-space">Khóa tài khoản</p>
+              <!-- <p class="button white small-space">Khóa tài khoản</p> -->
             </div>
             
             <!-- /BUTTON -->
@@ -316,7 +316,7 @@
                       [items]="provinces"
                       [clearable]="false"
                       formControlName="idProvince"
-                      [ngModel]="dataEditProfile.province_name"
+                      [ngModel]="dataEditProfile?.province_name"
                       (change)="getProvinceName()"
                       required
                     ></ng-select>
@@ -337,7 +337,7 @@
                       [clearable]="false"
                       formControlName="idDistrict"
                       class="form-controlP"
-                      [ngModel]="dataEditProfile.district_name"
+                      [ngModel]="dataEditProfile?.district_name"
                       required
                       (change)="getDistrictName()"
                     ></ng-select>
@@ -362,7 +362,7 @@
                       [clearable]="false"
                       formControlName="idWard"
                       class="form-controlP"
-                      [ngModel]="dataEditProfile.ward_name"
+                      [ngModel]="dataEditProfile?.ward_name"
                       required
                     ></ng-select>
                     <!-- /FORM SELECT ICON -->

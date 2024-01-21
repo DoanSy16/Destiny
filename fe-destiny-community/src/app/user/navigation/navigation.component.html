@@ -7,7 +7,7 @@
   <a
     class="user-avatar small user-status-avatar no-border no-outline"
     routerLink="/profile"
-    (click)="this.profileService.loadDataProfileTimeline(0)"
+    (click)="this.profileService.loadDataProfileTimeline(chatUserId)"
   >
     <div class="hexagon-container">
       <div class="hexagon user-avatar-content">
@@ -39,7 +39,7 @@
         <a
           [attr.data-title]="'navbar_home' | translate"
           class="menu-item-link"
-          routerLink="/newsfeed"
+          (click)="handleLinkClick($event)" routerLink="/newsfeed"
         >
           <!-- MENU ITEM LINK ICON -->
           <div class="menu-item-link-icon icon-newsfeed">
@@ -61,7 +61,7 @@
         <a
           [attr.data-title]="'sidebar_follow' | translate"
           class="menu-item-link"
-          routerLink="/follow"
+          (click)="handleLinkClick($event)" routerLink="/follow"
         >
           <!-- MENU ITEM LINK ICON -->
           <div class="menu-item-link-icon icon-overview">
@@ -82,7 +82,7 @@
         <a
           [attr.data-title]="'Nhantin' | translate"
           class="menu-item-link"
-          routerLink="/message"
+          (click)="handleLinkClick($event)" routerLink="/message"
         >
           <!-- MENU ITEM LINK ICON -->
           <div
@@ -110,7 +110,7 @@
         <a
           [attr.data-title]="'sidebar_history' | translate"
           class="menu-item-link"
-          routerLink="/history"
+          (click)="handleLinkClick($event)" routerLink="/history"
         >
           <!-- MENU ITEM LINK ICON -->
           <div class="menu-item-link-icon icon-group">
@@ -131,7 +131,7 @@
         <a
           [attr.data-title]="'navbar_contact' | translate"
           class="menu-item-link"
-          routerLink="/contact"
+          (click)="handleLinkClick($event)" routerLink="/contact"
         >
           <!-- MENU ITEM LINK ICON -->
           <div class="menu-item-link-icon icon-members">
@@ -152,7 +152,7 @@
         <a
           [attr.data-title]="'sidebar_setting' | translate"
           class="menu-item-link"
-          routerLink="/setting"
+          (click)="handleLinkClick($event)" routerLink="/setting"
         >
           <!-- MENU ITEM LINK ICON -->
           <div class="menu-item-link-icon icon-badges">
@@ -182,9 +182,10 @@
   <!-- /NAVIGATION WIDGET COVER -->
 
   <!-- USER SHORT DESCRIPTION -->
-  <div class="user-short-description big">
+  <a class="user-short-description big" href="profile"
+  (click)="this.profileService.loadDataProfileTimeline(chatUserId)">
     <!-- USER SHORT DESCRIPTION AVATAR -->
-    <a class="user-short-description-avatar user-avatar big" href="profile">
+    <a class="user-short-description-avatar user-avatar big">
       <div class="hexagon-container">
         <div class="hexagon user-avatar-content">
           <div
@@ -203,11 +204,11 @@
     <!-- /USER SHORT DESCRIPTION AVATAR -->
 
     <!-- USER SHORT DESCRIPTION TITLE -->
-    <p class="user-short-description-title">
-      <a href="profile">{{userDisplayName}}</a>
+    <p class="user-short-description-title" style="padding-top: 50px">
+      <a>{{userDisplayName}}</a>
     </p>
     <!-- /USER SHORT DESCRIPTION TITLE -->
-  </div>
+  </a>
   <!-- /USER SHORT DESCRIPTION -->
 
   <!-- USER STATS -->
@@ -255,7 +256,7 @@
     <!-- MENU ITEM -->
     <li [class.menu-item]="true" [class.active]="activeMenuItem === 'newsfeed'">
       <!-- MENU ITEM LINK -->
-      <a class="menu-item-link" routerLink="/newsfeed">
+      <a class="menu-item-link" (click)="handleLinkClick($event)" routerLink="/newsfeed" (click)="reloadPage()">
         <!-- MENU ITEM LINK ICON -->
         <div class="menu-item-link-icon icon-newsfeed">
           <i class="fa-solid fa-house"></i>
@@ -270,7 +271,7 @@
     <!-- MENU ITEM -->
     <li [class.menu-item]="true" [class.active]="activeMenuItem === 'message'">
       <!-- MENU ITEM LINK -->
-      <a class="menu-item-link" routerLink="/message">
+      <a class="menu-item-link" (click)="handleLinkClick($event)" routerLink="/message">
         <!-- MENU ITEM LINK ICON -->
         <div class="menu-item-link-icon icon-newsfeed">
           <i class="fa-solid fa-paper-plane"></i>
@@ -285,7 +286,7 @@
     <!-- MENU ITEM -->
     <li [class.menu-item]="true" [class.active]="activeMenuItem === 'follow'">
       <!-- MENU ITEM LINK -->
-      <a class="menu-item-link" routerLink="/follow">
+      <a class="menu-item-link" (click)="handleLinkClick($event)" routerLink="/follow">
         <!-- MENU ITEM LINK ICON -->
         <div class="menu-item-link-icon icon-overview">
           <i class="fa-solid fa-heart"></i>
@@ -300,7 +301,7 @@
     <!-- MENU ITEM -->
     <li [class.menu-item]="true" [class.active]="activeMenuItem === 'history'">
       <!-- MENU ITEM LINK -->
-      <a class="menu-item-link" routerLink="/history">
+      <a class="menu-item-link" (click)="handleLinkClick($event)" routerLink="/history">
         <!-- MENU ITEM LINK ICON -->
         <div class="menu-item-link-icon icon-group">
           <i class="fa-solid fa-clock-rotate-left"></i>
@@ -315,7 +316,7 @@
     <!-- MENU ITEM -->
     <li [class.menu-item]="true" [class.active]="activeMenuItem === 'contact'">
       <!-- MENU ITEM LINK -->
-      <a class="menu-item-link" routerLink="/contact">
+      <a class="menu-item-link" (click)="handleLinkClick($event)" routerLink="/contact">
         <!-- MENU ITEM LINK ICON -->
         <div class="menu-item-link-icon icon-members">
           <i class="fa-solid fa-envelope"></i>
@@ -330,7 +331,7 @@
     <!-- MENU ITEM -->
     <li [class.menu-item]="true" [class.active]="activeMenuItem === 'setting'">
       <!-- MENU ITEM LINK -->
-      <a class="menu-item-link" routerLink="setting">
+      <a class="menu-item-link" (click)="handleLinkClick($event)" routerLink="setting">
         <!-- MENU ITEM LINK ICON -->
         <div class="menu-item-link-icon icon-badges">
           <i class="fa-solid fa-gear"></i>
@@ -367,39 +368,33 @@
     <!-- NAVIGATION WIDGET INFO -->
     <div class="navigation-widget-info">
       <!-- USER AVATAR -->
-      <a class="user-avatar small no-outline" href="profile">
-        <!-- USER AVATAR CONTENT -->
-        <div class="user-avatar-content">
-          <!-- HEXAGON -->
-          <div
-            class="hexagon-image-30-32"
-            data-src="../../../assets/images/avatar/01.jpg"
-          ></div>
-          <!-- /HEXAGON -->
-        </div>
-        <!-- /USER AVATAR CONTENT -->
-
-        <!-- USER AVATAR PROGRESS -->
-        <div class="user-avatar-progress">
-          <!-- HEXAGON -->
-          <div class="hexagon-progress-40-44"></div>
-          <!-- /HEXAGON -->
-        </div>
-        <!-- /USER AVATAR PROGRESS -->
-
-        <!-- USER AVATAR PROGRESS BORDER -->
-        <div class="user-avatar-progress-border">
-          <!-- HEXAGON -->
-          <div class="hexagon-border-40-44"></div>
-          <!-- /HEXAGON -->
-        </div>
-        <!-- /USER AVATAR PROGRESS BORDER -->
-      </a>
+      <a
+    class="user-avatar small user-status-avatar no-border no-outline"
+    href="profile"
+    (click)="this.profileService.loadDataProfileTimeline(chatUserId)"
+  >
+    <div class="hexagon-container">
+      <div class="hexagon user-avatar-content">
+        <div
+          class="hexagon-image"
+          style="background-image: url('{{ avatar }}')"
+        ></div>
+      </div>
+      <div class="hexagon user-avatar-border">
+        <div class="hexagon-border"></div>
+      </div>
+      <div class="hexagon user-avatar-progress-border">
+        <div class="user-avatar-progress"></div>
+      </div>
+      <p class="user-avatar-badge-text">1</p>
+    </div>
+  </a>
       <!-- /USER AVATAR -->
 
       <!-- NAVIGATION WIDGET INFO TITLE -->
       <p class="navigation-widget-info-title">
-        <a href="profile">Marina Valentine</a>
+        <a href="profile"
+        (click)="this.profileService.loadDataProfileTimeline(chatUserId)">{{ userDisplayName }}</a>
       </p>
       <!-- /NAVIGATION WIDGET INFO TITLE -->
     </div>
@@ -425,7 +420,7 @@
     <!-- MENU ITEM -->
     <li [class.menu-item]="true" [class.active]="activeMenuItem === 'newsfeed'">
       <!-- MENU ITEM LINK -->
-      <a class="menu-item-link" routerLink="/newsfeed">
+      <a class="menu-item-link" (click)="handleLinkClick($event)" routerLink="/newsfeed">
         <!-- MENU ITEM LINK ICON -->
         <div class="menu-item-link-icon icon-newsfeed">
           <i class="fa-solid fa-house"></i>
@@ -439,13 +434,13 @@
     <!-- MENU ITEM -->
     <li [class.menu-item]="true" [class.active]="activeMenuItem === 'message'">
       <!-- MENU ITEM LINK -->
-      <a class="menu-item-link" routerLink="/message">
+      <a class="menu-item-link" (click)="handleLinkClick($event)" routerLink="/message">
         <!-- MENU ITEM LINK ICON -->
         <div class="menu-item-link-icon icon-newsfeed">
           <i class="fa-solid fa-paper-plane"></i>
         </div>
         <!-- /MENU ITEM LINK ICON -->
-        {{ "navbar_home" | translate }}
+        {{ 'Nhantin' | translate }}
       </a>
       <!-- /MENU ITEM LINK -->
     </li>
@@ -453,7 +448,7 @@
     <!-- MENU ITEM -->
     <li [class.menu-item]="true" [class.active]="activeMenuItem === 'follow'">
       <!-- MENU ITEM LINK -->
-      <a class="menu-item-link" routerLink="/follow">
+      <a class="menu-item-link" (click)="handleLinkClick($event)" routerLink="/follow">
         <!-- MENU ITEM LINK ICON -->
         <div class="menu-item-link-icon icon-overview">
           <i class="fa-solid fa-heart"></i>
@@ -468,7 +463,7 @@
     <!-- MENU ITEM -->
     <li [class.menu-item]="true" [class.active]="activeMenuItem === 'history'">
       <!-- MENU ITEM LINK -->
-      <a class="menu-item-link" routerLink="/history">
+      <a class="menu-item-link" (click)="handleLinkClick($event)" routerLink="/history">
         <!-- MENU ITEM LINK ICON -->
         <div class="menu-item-link-icon icon-group">
           <i class="fa-solid fa-clock-rotate-left"></i>
@@ -483,7 +478,7 @@
     <!-- MENU ITEM -->
     <li [class.menu-item]="true" [class.active]="activeMenuItem === 'contact'">
       <!-- MENU ITEM LINK -->
-      <a class="menu-item-link" routerLink="/contact">
+      <a class="menu-item-link" (click)="handleLinkClick($event)" routerLink="/contact">
         <!-- MENU ITEM LINK ICON -->
         <div class="menu-item-link-icon icon-members">
           <i class="fa-solid fa-envelope"></i>
@@ -498,7 +493,7 @@
     <!-- MENU ITEM -->
     <li [class.menu-item]="true" [class.active]="activeMenuItem === 'setting'">
       <!-- MENU ITEM LINK -->
-      <a class="menu-item-link" routerLink="/setting">
+      <a class="menu-item-link" (click)="handleLinkClick($event)" routerLink="/setting">
         <!-- MENU ITEM LINK ICON -->
         <div class="menu-item-link-icon icon-badges">
           <i class="fa-solid fa-gear"></i>
@@ -513,14 +508,18 @@
   <!-- /MENU -->
 
   <!-- NAVIGATION WIDGET SECTION TITLE -->
+  <a href="profile"
+  (click)="this.profileService.loadDataProfileTimeline(chatUserId)">
+
   <p class="navigation-widget-section-title">{{ userDisplayName }}</p>
+</a>
   <!-- /NAVIGATION WIDGET SECTION TITLE -->
 
   <!-- NAVIGATION WIDGET SECTION LINK -->
   <a
     class="navigation-widget-section-link"
     href="profile"
-    (click)="this.profileService.loadDataProfileTimeline(0)"
+    (click)="this.profileService.loadDataProfileTimeline(chatUserId)"
     >{{ "Thông tin" | translate }}</a
   >
   <!-- /NAVIGATION WIDGET SECTION LINK -->
@@ -556,15 +555,15 @@
   <!-- /NAVIGATION WIDGET SECTION TITLE -->
 
   <!-- NAVIGATION WIDGET SECTION LINK -->
-  <a class="navigation-widget-section-link" href="newsfeed">{{
+  <!-- <a class="navigation-widget-section-link" href="newsfeed">{{
     "navbar_home" | translate
-  }}</a>
+  }}</a> -->
   <!-- /NAVIGATION WIDGET SECTION LINK -->
 
   <!-- NAVIGATION WIDGET SECTION LINK -->
-  <a class="navigation-widget-section-link" href="">{{
+  <!-- <a class="navigation-widget-section-link" href="">{{
     "admin_gioithieu" | translate
-  }}</a>
+  }}</a> -->
   <!-- /NAVIGATION WIDGET SECTION LINK -->
 </nav>
 <!-- /NAVIGATION WIDGET -->
@@ -673,6 +672,7 @@
         type="text"
         id="search-main"
         name="search_main"
+        [(ngModel)]="searchTerm" (input)="search()"
         placeholder="{{ 'navbar_search' | translate }}"
       />
       <!-- INTERACTIVE INPUT ICON WRAP -->
@@ -701,274 +701,164 @@
     <div class="dropdown-box padding-bottom-small header-search-dropdown">
       <!-- DROPDOWN BOX CATEGORY -->
       <div class="dropdown-box-category">
-        <!-- DROPDOWN BOX CATEGORY TITLE -->
-        <p class="dropdown-box-category-title">Members</p>
-        <!-- /DROPDOWN BOX CATEGORY TITLE -->
+        <p class="dropdown-box-category-title">Người dùng</p>
       </div>
       <!-- /DROPDOWN BOX CATEGORY -->
 
       <!-- DROPDOWN BOX LIST -->
       <div class="dropdown-box-list small no-scroll">
         <!-- DROPDOWN BOX LIST ITEM -->
-        <a class="dropdown-box-list-item" href="profile">
-          <!-- USER STATUS -->
-          <div class="user-status notification">
-            <!-- USER STATUS AVATAR -->
-            <div class="user-status-avatar">
-              <!-- USER AVATAR -->
-              <div class="user-avatar small no-outline">
-                <!-- USER AVATAR CONTENT -->
-                <div class="user-avatar-content">
-                  <!-- HEXAGON -->
-                  <div
-                    class="hexagon-image-30-32"
-                    data-src="../../../assets/images/avatar/05.jpg"
-                  ></div>
-                  <!-- /HEXAGON -->
-                </div>
-                <!-- /USER AVATAR CONTENT -->
-
-                <!-- USER AVATAR PROGRESS -->
-                <div class="user-avatar-progress">
-                  <!-- HEXAGON -->
-                  <div class="hexagon-progress-40-44"></div>
-                  <!-- /HEXAGON -->
-                </div>
-                <!-- /USER AVATAR PROGRESS -->
-
-                <!-- USER AVATAR PROGRESS BORDER -->
-                <div class="user-avatar-progress-border">
-                  <!-- HEXAGON -->
-                  <div class="hexagon-border-40-44"></div>
-                  <!-- /HEXAGON -->
-                </div>
-                <!-- /USER AVATAR PROGRESS BORDER -->
-              </div>
-              <!-- /USER AVATAR -->
-            </div>
-            <!-- /USER STATUS AVATAR -->
-
-            <!-- USER STATUS TITLE -->
-            <p class="user-status-title">
-              <span class="bold">Neko Bebop</span>
-            </p>
-            <!-- /USER STATUS TITLE -->
-
-            <!-- USER STATUS TEXT -->
-            <p class="user-status-text">1 friends in common</p>
-            <!-- /USER STATUS TEXT -->
-
-            <!-- USER STATUS ICON -->
-            <div class="user-status-icon">
-              <!-- ICON FRIEND -->
-              <svg class="icon-friend">
-                <use xlink:href="#svg-friend"></use>
-              </svg>
-              <!-- /ICON FRIEND -->
-            </div>
-            <!-- /USER STATUS ICON -->
-          </div>
-          <!-- /USER STATUS -->
-        </a>
-        <!-- /DROPDOWN BOX LIST ITEM -->
-
-        <!-- DROPDOWN BOX LIST ITEM -->
-        <a class="dropdown-box-list-item" href="profile">
-          <!-- USER STATUS -->
-          <div class="user-status notification">
-            <!-- USER STATUS AVATAR -->
-            <div class="user-status-avatar">
-              <!-- USER AVATAR -->
-              <div class="user-avatar small no-outline">
-                <!-- USER AVATAR CONTENT -->
-                <div class="user-avatar-content">
-                  <!-- HEXAGON -->
-                  <div
-                    class="hexagon-image-30-32"
-                    data-src="../../../assets/images/avatar/15.jpg"
-                  ></div>
-                  <!-- /HEXAGON -->
-                </div>
-                <!-- /USER AVATAR CONTENT -->
-
-                <!-- USER AVATAR PROGRESS -->
-                <div class="user-avatar-progress">
-                  <!-- HEXAGON -->
-                  <div class="hexagon-progress-40-44"></div>
-                  <!-- /HEXAGON -->
-                </div>
-                <!-- /USER AVATAR PROGRESS -->
-
-                <!-- USER AVATAR PROGRESS BORDER -->
-                <div class="user-avatar-progress-border">
-                  <!-- HEXAGON -->
-                  <div class="hexagon-border-40-44"></div>
-                  <!-- /HEXAGON -->
-                </div>
-                <!-- /USER AVATAR PROGRESS BORDER -->
-
-                <!-- USER AVATAR BADGE -->
-                <div class="user-avatar-badge">
-                  <!-- USER AVATAR BADGE BORDER -->
-                  <div class="user-avatar-badge-border">
-                    <!-- HEXAGON -->
-                    <div class="hexagon-22-24"></div>
-                    <!-- /HEXAGON -->
+        <div *ngIf="listSearch.length === 0" class="no-find">Không tìm thầy người dùng</div>
+        <div *ngFor="let u of listSearch">
+          <a class="dropdown-box-list-item" href="profile" (click)="this.profileService.loadDataProfileTimeline(u[0])">
+            <!-- USER STATUS -->
+            <div class="user-status notification">
+              <!-- USER STATUS AVATAR -->
+              <a
+                  class="user-avatar small user-status-avatar no-border no-outline"
+                >
+                  <div class="hexagon-container">
+                    <div class="hexagon user-avatar-content">
+                      <div
+                        class="hexagon-image"
+                        style="background-image: url('{{u[2]}}')"
+                      ></div>
+                    </div>
+                    <div class="hexagon user-avatar-border">
+                      <div class="hexagon-border"></div>
+                    </div>
+                    <div class="hexagon user-avatar-progress-border">
+                      <div class="user-avatar-progress"></div>
+                    </div>
                   </div>
-                  <!-- /USER AVATAR BADGE BORDER -->
-
-                  <!-- USER AVATAR BADGE CONTENT -->
-                  <div class="user-avatar-badge-content">
-                    <!-- HEXAGON -->
-                    <div class="hexagon-dark-16-18"></div>
-                    <!-- /HEXAGON -->
-                  </div>
-                  <!-- /USER AVATAR BADGE CONTENT -->
-
-                  <!-- USER AVATAR BADGE TEXT -->
-                  <p class="user-avatar-badge-text">7</p>
-                  <!-- /USER AVATAR BADGE TEXT -->
-                </div>
-                <!-- /USER AVATAR BADGE -->
+                </a>
+              <!-- /USER STATUS AVATAR -->
+  
+              <!-- USER STATUS TITLE -->
+              <p class="user-status-title">
+                <span class="bold">{{u[1]}}</span>
+              </p>
+              <!-- /USER STATUS TITLE -->
+  
+              <!-- USER STATUS TEXT -->
+              <p class="user-status-text">{{u[3] ? 'Bạn bè': 'Người lạ'}}</p>
+              <!-- /USER STATUS TEXT -->
+  
+              <!-- USER STATUS ICON -->
+              <div class="user-status-icon">
+                <!-- ICON FRIEND -->
+                <svg class="icon-friend">
+                  <use xlink:href="#svg-friend"></use>
+                </svg>
+                <!-- /ICON FRIEND -->
               </div>
-              <!-- /USER AVATAR -->
+              <!-- /USER STATUS ICON -->
             </div>
-            <!-- /USER STATUS AVATAR -->
-
-            <!-- USER STATUS TITLE -->
-            <p class="user-status-title">
-              <span class="bold">Tim Rogers</span>
-            </p>
-            <!-- /USER STATUS TITLE -->
-
-            <!-- USER STATUS TEXT -->
-            <p class="user-status-text">4 friends in common</p>
-            <!-- /USER STATUS TEXT -->
-
-            <!-- USER STATUS ICON -->
-            <div class="user-status-icon">
-              <!-- ICON FRIEND -->
-              <svg class="icon-friend">
-                <use xlink:href="#svg-friend"></use>
-              </svg>
-              <!-- /ICON FRIEND -->
-            </div>
-            <!-- /USER STATUS ICON -->
-          </div>
-          <!-- /USER STATUS -->
-        </a>
+            <!-- /USER STATUS -->
+          </a>
+        </div>
         <!-- /DROPDOWN BOX LIST ITEM -->
       </div>
       <!-- /DROPDOWN BOX LIST -->
 
       <!-- DROPDOWN BOX CATEGORY -->
       <div class="dropdown-box-category">
-        <!-- DROPDOWN BOX CATEGORY TITLE -->
-        <p class="dropdown-box-category-title">Groups</p>
-        <!-- /DROPDOWN BOX CATEGORY TITLE -->
+        <p class="dropdown-box-category-title">Bài đăng</p>
       </div>
       <!-- /DROPDOWN BOX CATEGORY -->
 
       <!-- DROPDOWN BOX LIST -->
       <div class="dropdown-box-list small no-scroll">
         <!-- DROPDOWN BOX LIST ITEM -->
-        <a class="dropdown-box-list-item" href="">
-          <!-- USER STATUS -->
-          <div class="user-status notification">
-            <!-- USER STATUS AVATAR -->
-            <div class="user-status-avatar">
-              <!-- USER AVATAR -->
-              <div class="user-avatar small no-border">
-                <!-- USER AVATAR CONTENT -->
-                <div class="user-avatar-content">
-                  <!-- HEXAGON -->
-                  <div
-                    class="hexagon-image-40-44"
-                    data-src="../../../assets/images/avatar/24.jpg"
-                  ></div>
-                  <!-- /HEXAGON -->
-                </div>
-                <!-- /USER AVATAR CONTENT -->
+        <div *ngIf="listSearchPost.length === 0" class="no-find">Không tìm thầy bài đăng</div>
+        <div *ngFor="let u of listSearchPost">
+          <a class="dropdown-box-list-item" href="detail-post?id={{u[0]}}" (click)="this.profileService.loadDataProfileTimeline(u[0])">
+            <!-- USER STATUS -->
+            <div class="user-status notification">
+              <div class="user-status-avatar">
+                <!-- PICTURE -->
+                <figure class="picture small round liquid">
+                  <img
+                    src="{{u[3]}}"
+                    alt="item-07"
+                  />
+                </figure>
+                <!-- /PICTURE -->
               </div>
-              <!-- /USER AVATAR -->
+              <!-- USER STATUS TITLE -->
+              <p class="user-status-title">
+                <span class="bold">{{u[1]}}</span>
+              </p>
+              <!-- /USER STATUS TITLE -->
+  
+              <!-- USER STATUS TEXT -->
+              <p class="user-status-text">{{u[2]}} lượt tương tác</p>
+              <!-- /USER STATUS TEXT -->
+  
+              <!-- USER STATUS ICON -->
+              <div class="user-status-icon">
+                <!-- ICON FRIEND -->
+                <svg class="icon-friend">
+                  <use xlink:href="#svg-status"></use>
+                </svg>
+                <!-- /ICON FRIEND -->
+              </div>
+              <!-- /USER STATUS ICON -->
             </div>
-            <!-- /USER STATUS AVATAR -->
-
-            <!-- USER STATUS TITLE -->
-            <p class="user-status-title">
-              <span class="bold">Cosplayers of the World</span>
-            </p>
-            <!-- /USER STATUS TITLE -->
-
-            <!-- USER STATUS TEXT -->
-            <p class="user-status-text">139 members</p>
-            <!-- /USER STATUS TEXT -->
-
-            <!-- USER STATUS ICON -->
-            <div class="user-status-icon">
-              <!-- ICON GROUP -->
-              <svg class="icon-group">
-                <use xlink:href="#svg-group"></use>
-              </svg>
-              <!-- /ICON GROUP -->
-            </div>
-            <!-- /USER STATUS ICON -->
-          </div>
-          <!-- /USER STATUS -->
-        </a>
+            <!-- /USER STATUS -->
+          </a>
+        </div>
         <!-- /DROPDOWN BOX LIST ITEM -->
       </div>
       <!-- /DROPDOWN BOX LIST -->
-
-      <!-- DROPDOWN BOX CATEGORY -->
-      <div class="dropdown-box-category">
-        <!-- DROPDOWN BOX CATEGORY TITLE -->
-        <p class="dropdown-box-category-title">Marketplace</p>
-        <!-- /DROPDOWN BOX CATEGORY TITLE -->
+    
+       <!-- DROPDOWN BOX CATEGORY -->
+       <div class="dropdown-box-category">
+        <p class="dropdown-box-category-title">Hashtag</p>
       </div>
       <!-- /DROPDOWN BOX CATEGORY -->
 
       <!-- DROPDOWN BOX LIST -->
       <div class="dropdown-box-list small no-scroll">
         <!-- DROPDOWN BOX LIST ITEM -->
-        <a class="dropdown-box-list-item" href="">
-          <!-- USER STATUS -->
-          <div class="user-status no-padding-top">
-            <!-- USER STATUS AVATAR -->
-            <div class="user-status-avatar">
-              <!-- PICTURE -->
-              <figure class="picture small round liquid">
-                <img
-                  src="../../../assets/images/marketplace/items/07.jpg"
-                  alt="item-07"
-                />
-              </figure>
-              <!-- /PICTURE -->
+        <div *ngIf="listSearchHashTag.length === 0" class="no-find">Không tìm thầy hashtag</div>
+        <div *ngFor="let u of listSearchHashTag">
+          <a class="dropdown-box-list-item" href="detail-post?id={{u[0]}}" (click)="this.profileService.loadDataProfileTimeline(u[0])">
+            <!-- USER STATUS -->
+            <div class="user-status notification">
+              <div class="user-status-avatar">
+                <!-- PICTURE -->
+                <figure class="picture small round liquid">
+                  <img
+                    src="{{u[3]}}"
+                    alt="item-07"
+                  />
+                </figure>
+                <!-- /PICTURE -->
+              </div>
+              <!-- USER STATUS TITLE -->
+              <p class="user-status-title">
+                <span class="bold">{{u[1]}}</span>
+              </p>
+              <!-- /USER STATUS TITLE -->
+  
+              <!-- USER STATUS TEXT -->
+              <p class="user-status-text">{{u[2]}} lượt tương tác</p>
+              <!-- /USER STATUS TEXT -->
+  
+              <!-- USER STATUS ICON -->
+              <div class="user-status-icon">
+                <!-- ICON FRIEND -->
+                <svg class="icon-friend" width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 4L7 20M17 4L14 20M5 8H20M4 16H19" stroke="#000000" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                <!-- /ICON FRIEND -->
+              </div>
+              <!-- /USER STATUS ICON -->
             </div>
-            <!-- /USER STATUS AVATAR -->
-
-            <!-- USER STATUS TITLE -->
-            <p class="user-status-title">
-              <span class="bold">Mercenaries White Frame</span>
-            </p>
-            <!-- /USER STATUS TITLE -->
-
-            <!-- USER STATUS TEXT -->
-            <p class="user-status-text">By Neko Bebop</p>
-            <!-- /USER STATUS TEXT -->
-
-            <!-- USER STATUS ICON -->
-            <div class="user-status-icon">
-              <!-- ICON MARKETPLACE -->
-              <svg class="icon-marketplace">
-                <use xlink:href="#svg-marketplace"></use>
-              </svg>
-              <!-- /ICON MARKETPLACE -->
-            </div>
-            <!-- /USER STATUS ICON -->
-          </div>
-          <!-- /USER STATUS -->
-        </a>
+            <!-- /USER STATUS -->
+          </a>
+        </div>
         <!-- /DROPDOWN BOX LIST ITEM -->
       </div>
       <!-- /DROPDOWN BOX LIST -->
@@ -1052,8 +942,7 @@
                 <!-- USER STATUS AVATAR -->
                 <a
                   class="user-avatar small user-status-avatar no-border no-outline"
-                  routerLink="/profile"
-                  (click)="this.profileService.loadDataProfileTimeline(notif.value.fromUserId)"
+                  (click)="handleLinkClick($event)"
                 >
                   <div class="hexagon-container">
                     <div class="hexagon user-avatar-content">
@@ -1075,9 +964,9 @@
 
                 <!-- USER STATUS TITLE -->
                 <p class="user-status-title">
-                  <a class="bold" href="profile">{{ notif.value.fullname }}</a>
+                  <a class="bold" href="profile" (click)="this.profileService.loadDataProfileTimeline(notif.value.fromUserId)">{{ notif.value.fullname }}</a>
                   đã bình luận vào
-                  <a class="highlighted" href="photos">bài đăng</a> của bạn
+                  <a class="highlighted" href="detail-post?id={{notif.value.postId}}">bài đăng</a> của bạn
                 </p>
                 <!-- /USER STATUS TITLE -->
 
@@ -1098,6 +987,60 @@
               <!-- /USER STATUS -->
             </div>
             <!-- Comment -->
+             <!-- Comment mention-->
+             <div class="dropdown-box-list-item"
+             *ngIf="checkType(notif.value.type) === 'MENTION'"
+             >
+               <!-- USER STATUS -->
+               <div class="user-status notification">
+                 <!-- USER STATUS AVATAR -->
+                 <a
+                   class="user-avatar small user-status-avatar no-border no-outline"
+                   (click)="handleLinkClick($event)"
+                 >
+                   <div class="hexagon-container">
+                     <div class="hexagon user-avatar-content">
+                       <div
+                         class="hexagon-image"
+                         style="background-image: url('{{notif.value.avatar}}')"
+                       ></div>
+                     </div>
+                     <div class="hexagon user-avatar-border">
+                       <div class="hexagon-border"></div>
+                     </div>
+                     <div class="hexagon user-avatar-progress-border">
+                       <div class="user-avatar-progress"></div>
+                     </div>
+                     <p class="user-avatar-badge-text">1</p>
+                   </div>
+                 </a>
+                 <!-- /USER STATUS AVATAR -->
+ 
+                 <!-- USER STATUS TITLE -->
+                 <p class="user-status-title">
+                   <a class="bold" href="profile" (click)="this.profileService.loadDataProfileTimeline(notif.value.fromUserId)">{{ notif.value.fullname }}</a>
+                   đã nhắc đến bạn trong
+                   <a class="highlighted" href="detail-post?id={{notif.value.postId}}">bài đăng</a>
+                 </p>
+                 <!-- /USER STATUS TITLE -->
+ 
+                 <!-- USER STATUS TIMESTAMP -->
+                 <p class="user-status-timestamp">{{ notif.value.time }}</p>
+                 <!-- /USER STATUS TIMESTAMP -->
+ 
+                 <!-- USER STATUS ICON -->
+                 <div class="user-status-icon">
+                   <!-- ICON COMMENT -->
+                   <svg class="icon-comment">
+                     <use xlink:href="#svg-comment"></use>
+                   </svg>
+                   <!-- /ICON COMMENT -->
+                 </div>
+                 <!-- /USER STATUS ICON -->
+               </div>
+               <!-- /USER STATUS -->
+             </div>
+             <!-- Comment mention-->
             <!-- Rep Comment -->
             <div class="dropdown-box-list-item"
             *ngIf="checkType(notif.value.type) === 'REPCOMMENT'"
@@ -1107,8 +1050,7 @@
                 <!-- USER STATUS AVATAR -->
                 <a
                   class="user-avatar small user-status-avatar no-border no-outline"
-                  routerLink="/profile"
-                  (click)="this.profileService.loadDataProfileTimeline(notif.value.fromUserId)"
+                  (click)="handleLinkClick($event)"
                 >
                   <div class="hexagon-container">
                     <div class="hexagon user-avatar-content">
@@ -1130,9 +1072,9 @@
 
                 <!-- USER STATUS TITLE -->
                 <p class="user-status-title">
-                  <a class="bold" href="profile">{{ notif.value.fullname }}</a>
-                  đã trả lời bình luận của bạn 
-                  <!-- <a class="highlighted" href="photos">bài đăng</a>  -->
+                  <a class="bold" href="profile" (click)="this.profileService.loadDataProfileTimeline(notif.value.fromUserId)">{{ notif.value.fullname }}</a>
+                  đã trả lời bình luận của bạn ở
+                  <a class="highlighted"  href="detail-post?id={{notif.value.postId}}"> bài đăng</a> 
                 </p>
                 <!-- /USER STATUS TITLE -->
 
@@ -1162,8 +1104,7 @@
                 <!-- USER STATUS AVATAR -->
                 <a
                   class="user-avatar small user-status-avatar no-border no-outline"
-                  routerLink="/profile"
-                  (click)="this.profileService.loadDataProfileTimeline(notif.value.fromUserId)"
+                  (click)="handleLinkClick($event)"
                 >
                   <div class="hexagon-container">
                     <div class="hexagon user-avatar-content">
@@ -1185,9 +1126,9 @@
 
                 <!-- USER STATUS TITLE -->
                 <p class="user-status-title">
-                  <a class="bold" href="profile">{{ notif.value.fullname }}</a>
+                  <a class="bold" href="profile" (click)="this.profileService.loadDataProfileTimeline(notif.value.fromUserId)">{{ notif.value.fullname }}</a>
                   đã chia sẻ
-                  <a class="highlighted" href="photos">bài đăng</a> của bạn
+                  <a class="highlighted" href="detail-post?id={{notif.value.postId}}">bài đăng</a> của bạn
                 </p>
                 <!-- /USER STATUS TITLE -->
 
@@ -1216,8 +1157,7 @@
                 <!-- USER STATUS AVATAR -->
                 <a
                   class="user-avatar small user-status-avatar no-border no-outline"
-                  routerLink="/profile"
-                  (click)="this.profileService.loadDataProfileTimeline(notif.value.fromUserId)"
+                  (click)="handleLinkClick($event)"
                 >
                   <div class="hexagon-container">
                     <div class="hexagon user-avatar-content">
@@ -1239,9 +1179,9 @@
 
                 <!-- USER STATUS TITLE -->
                 <p class="user-status-title">
-                  <a class="bold" href="profile">{{ notif.value.fullname }}</a>
+                  <a class="bold" href="profile" (click)="this.profileService.loadDataProfileTimeline(notif.value.fromUserId)">{{ notif.value.fullname }}</a>
                   đã quan tâm
-                  <a class="highlighted" href="photos">bài đăng</a> của bạn
+                  <a class="highlighted" href="detail-post?id={{notif.value.postId}}">bài đăng</a> của bạn
                 </p>
                 <!-- /USER STATUS TITLE -->
 
@@ -1271,8 +1211,7 @@
                 <!-- USER STATUS AVATAR -->
                 <a
                   class="user-avatar small user-status-avatar no-border no-outline"
-                  routerLink="/profile"
-                  (click)="this.profileService.loadDataProfileTimeline(notif.value.fromUserId)"
+                  (click)="handleLinkClick($event)"
                 >
                   <div class="hexagon-container">
                     <div class="hexagon user-avatar-content">
@@ -1294,11 +1233,11 @@
 
                 <!-- USER STATUS TITLE -->
                 <p class="user-status-title" *ngIf="notif.value.following_status === false">
-                  <a class="bold" href="profile">{{ notif.value.fullname }}</a>
+                  <a class="bold" href="profile" (click)="this.profileService.loadDataProfileTimeline(notif.value.fromUserId)">{{ notif.value.fullname }}</a>
                   đã theo dõi bạn
                 </p>
                 <p class="user-status-title" *ngIf="notif.value.following_status === true">
-                  <a class="bold" href="profile">{{ notif.value.fullname }}</a>
+                  <a class="bold" href="profile" (click)="this.profileService.loadDataProfileTimeline(notif.value.fromUserId)">{{ notif.value.fullname }}</a>
                   và bạn đã là bạn bè
                 </p>
                 <!-- /USER STATUS TITLE -->
@@ -1315,6 +1254,7 @@
               <!-- /USER STATUS -->
             </div>
             <!-- follow -->
+            
             <!-- interested -->
             </div>
             
@@ -1323,7 +1263,7 @@
           <!-- /DROPDOWN BOX LIST -->
 
           <!-- DROPDOWN BOX BUTTON -->
-          <a class="dropdown-box-button secondary" href="notifications">
+          <a class="dropdown-box-button secondary" routerLink="/notifications">
             {{ "newsfeed_xemtatca" | translate }}</a
           >
           <!-- /DROPDOWN BOX BUTTON -->
@@ -1356,8 +1296,8 @@
             <!-- USER STATUS AVATAR -->
             <a
               class="user-avatar small user-status-avatar no-border no-outline"
-              routerLink="/profile"
-              (click)="this.profileService.loadDataProfileTimeline(0)"
+              (click)="handleLinkClick($event)" routerLink="/profile"
+              (click)="this.profileService.loadDataProfileTimeline(chatUserId)"
             >
               <div class="hexagon-container">
                 <div class="hexagon user-avatar-content">
@@ -1397,16 +1337,16 @@
         <!-- DROPDOWN NAVIGATION LINK -->
         <a
           class="dropdown-navigation-link"
-          routerLink="/profile"
-          (click)="this.profileService.loadDataProfileTimeline(0)"
+          (click)="handleLinkClick($event)" routerLink="/profile"
+          (click)="this.profileService.loadDataProfileTimeline(chatUserId)"
           >Trang cá nhân</a
         >
         <!-- /DROPDOWN NAVIGATION LINK -->
 
         <!-- DROPDOWN NAVIGATION LINK -->
-        <a class="dropdown-navigation-link" routerLink="/edit-profile">{{
+        <a class="dropdown-navigation-link" (click)="handleLinkClick($event)" routerLink="/edit-profile">{{
           "admin_capnhat" | translate
-        }}</a>
+        }}</a> 
         <!-- /DROPDOWN NAVIGATION LINK -->
 
         <!-- DROPDOWN NAVIGATION LINK -->

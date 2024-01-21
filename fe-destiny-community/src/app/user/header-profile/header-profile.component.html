@@ -16,7 +16,7 @@
     <!-- USER SHORT DESCRIPTION -->
     <div class="user-short-description big">
       <!-- USER SHORT DESCRIPTION AVATAR -->
-      <a class="user-short-description-avatar user-avatar big" href="profile">
+      <a class="user-short-description-avatar user-avatar big">
         <div class="hexagon-container">
           <div class="hexagon user-avatar-content">
             <div
@@ -37,7 +37,6 @@
       <!-- USER SHORT DESCRIPTION AVATAR -->
       <a
         class="user-short-description-avatar user-short-description-avatar-mobile user-avatar medium"
-        href="profile"
       >
         <div class="hexagon-container">
           <div class="hexagon user-avatar-content">
@@ -58,7 +57,7 @@
 
       <!-- USER SHORT DESCRIPTION TITLE -->
       <p class="user-short-description-title">
-        <a href="profile-timeline">{{
+        <a>{{
           profileService.header?.fullname
         }}</a>
       </p>
@@ -66,7 +65,7 @@
 
       <!-- USER SHORT DESCRIPTION TEXT -->
       <p class="user-short-description-text">
-        <a>{{ profileService.header?.username }}</a>
+        <a>&#64;{{ profileService.header?.username }}</a>
       </p>
       <!-- /USER SHORT DESCRIPTION TEXT -->
     </div>
@@ -119,7 +118,7 @@
     <!-- /USER STATS -->
 
     <!-- PROFILE HEADER INFO ACTIONS -->
-    <div class="profile-header-info-actions" *ngIf="idLocal != 0">
+    <div class="profile-header-info-actions" *ngIf="idLocal != 0 && idLocal !== chatUserId">
       <!-- PROFILE HEADER INFO ACTION -->
       <p
         class="profile-header-info-action button secondary"
@@ -146,106 +145,83 @@
 <nav class="section-navigation">
   <!-- SECTION MENU -->
   <div id="section-navigation-slider" class="section-menu">
-    <!-- SECTION MENU ITEM -->
+    <!-- <div class="scroll-container"> -->
+      <!-- SECTION MENU ITEM -->
     <a
-      [class.section-menu-item]="true"
-      [class.active]="activeMenuItem === 'profile'"
-      routerLink="/profile"
-    >
-      <!-- SECTION MENU ITEM ICON -->
-      <svg class="section-menu-item-icon icon-timeline">
-        <use xlink:href="#svg-timeline"></use>
-      </svg>
-      <!-- /SECTION MENU ITEM ICON -->
+    [class.section-menu-item]="true"
+    [class.active]="activeMenuItem === 'profile'"
+    routerLink="/profile"
+  >
+    <!-- SECTION MENU ITEM ICON -->
+    <svg class="section-menu-item-icon icon-timeline">
+      <use xlink:href="#svg-timeline"></use>
+    </svg>
+    <!-- /SECTION MENU ITEM ICON -->
 
-      <!-- SECTION MENU ITEM TEXT -->
-      <p class="section-menu-item-text">Bài đăng</p>
-      <!-- /SECTION MENU ITEM TEXT -->
-    </a>
-    <!-- /SECTION MENU ITEM -->
+    <!-- SECTION MENU ITEM TEXT -->
+    <p class="section-menu-item-text">Bài đăng</p>
+    <!-- /SECTION MENU ITEM TEXT -->
+  </a>
+  <!-- /SECTION MENU ITEM -->
 
-    <!-- SECTION MENU ITEM -->
-    <a
-      [class.section-menu-item]="true"
-      [class.active]="activeMenuItem === 'edit-profile'"
-      routerLink="/edit-profile"
-      *ngIf="idLocal === 0 || idLocal === chatUserId"
-    >
-      <!-- SECTION MENU ITEM ICON -->
-      <svg class="section-menu-item-icon icon-profile">
-        <use xlink:href="#svg-profile"></use>
-      </svg>
-      <!-- /SECTION MENU ITEM ICON -->
+  <!-- SECTION MENU ITEM -->
+  <a
+    [class.section-menu-item]="true"
+    [class.active]="activeMenuItem === 'edit-profile'"
+    routerLink="/edit-profile"
+    *ngIf="idLocal === 0 || idLocal === chatUserId"
+  >
+    <!-- SECTION MENU ITEM ICON -->
+    <svg class="section-menu-item-icon icon-profile">
+      <use xlink:href="#svg-profile"></use>
+    </svg>
+    <!-- /SECTION MENU ITEM ICON -->
 
-      <!-- SECTION MENU ITEM TEXT -->
-      <p class="section-menu-item-text">Thông tin</p>
-      <!-- /SECTION MENU ITEM TEXT -->
-    </a>
-    <!-- /SECTION MENU ITEM -->
+    <!-- SECTION MENU ITEM TEXT -->
+    <p class="section-menu-item-text">Thông tin</p>
+    <!-- /SECTION MENU ITEM TEXT -->
+  </a>
+  <!-- /SECTION MENU ITEM -->
 
-    <!-- SECTION MENU ITEM -->
-    <a
-      [class.section-menu-item]="true"
-      [class.active]="activeMenuItem === 'follow'"
-      routerLink="/follow"
-      *ngIf="idLocal === 0 || idLocal === chatUserId"
-    >
-      <!-- SECTION MENU ITEM ICON -->
-      <svg class="section-menu-item-icon icon-friend">
-        <use xlink:href="#svg-friend"></use>
-      </svg>
-      <!-- /SECTION MENU ITEM ICON -->
+  <!-- SECTION MENU ITEM -->
+  <a
+    [class.section-menu-item]="true"
+    [class.active]="activeMenuItem === 'follow'"
+    routerLink="/follow"
+    *ngIf="idLocal === 0 || idLocal === chatUserId"
+  >
+    <!-- SECTION MENU ITEM ICON -->
+    <svg class="section-menu-item-icon icon-friend">
+      <use xlink:href="#svg-friend"></use>
+    </svg>
+    <!-- /SECTION MENU ITEM ICON -->
 
-      <!-- SECTION MENU ITEM TEXT -->
-      <p class="section-menu-item-text">Theo dõi</p>
-      <!-- /SECTION MENU ITEM TEXT -->
-    </a>
-    <!-- /SECTION MENU ITEM -->
+    <!-- SECTION MENU ITEM TEXT -->
+    <p class="section-menu-item-text">Theo dõi</p>
+    <!-- /SECTION MENU ITEM TEXT -->
+  </a>
+  <!-- /SECTION MENU ITEM -->
 
-    <!-- SECTION MENU ITEM -->
-    <a
-      [class.section-menu-item]="true"
-      [class.active]="activeMenuItem === 'photos'"
-      routerLink="/photos"
-      *ngIf="idLocal === 0 || idLocal === chatUserId"
-    >
-      <!-- SECTION MENU ITEM ICON -->
-      <svg class="section-menu-item-icon icon-photos">
-        <use xlink:href="#svg-photos"></use>
-      </svg>
-      <!-- /SECTION MENU ITEM ICON -->
+  <!-- SECTION MENU ITEM -->
+  <a
+    [class.section-menu-item]="true"
+    [class.active]="activeMenuItem === 'photos'"
+    routerLink="/photos"
+  >
+    <!-- SECTION MENU ITEM ICON -->
+    <svg class="section-menu-item-icon icon-photos">
+      <use xlink:href="#svg-photos"></use>
+    </svg>
+    <!-- /SECTION MENU ITEM ICON -->
 
-      <!-- SECTION MENU ITEM TEXT -->
-      <p class="section-menu-item-text">Hình ảnh</p>
-      <!-- /SECTION MENU ITEM TEXT -->
-    </a>
-    <!-- /SECTION MENU ITEM -->
+    <!-- SECTION MENU ITEM TEXT -->
+    <p class="section-menu-item-text">Hình ảnh</p>
+    <!-- /SECTION MENU ITEM TEXT -->
+  </a>
+  <!-- /SECTION MENU ITEM -->
+    <!-- </div> -->
   </div>
   <!-- /SECTION MENU -->
-
-  <!-- SLIDER CONTROLS -->
-  <div id="section-navigation-slider-controls" class="slider-controls">
-    <!-- SLIDER CONTROL -->
-    <div class="slider-control left">
-      <!-- SLIDER CONTROL ICON -->
-      <svg class="slider-control-icon icon-small-arrow">
-        <use xlink:href="#svg-small-arrow"></use>
-      </svg>
-      <!-- /SLIDER CONTROL ICON -->
-    </div>
-    <!-- /SLIDER CONTROL -->
-
-    <!-- SLIDER CONTROL -->
-    <div class="slider-control right">
-      <!-- SLIDER CONTROL ICON -->
-      <svg class="slider-control-icon icon-small-arrow">
-        <use xlink:href="#svg-small-arrow"></use>
-      </svg>
-      <!-- /SLIDER CONTROL ICON -->
-    </div>
-    <!-- /SLIDER CONTROL -->
-  </div>
-  <!-- /SLIDER CONTROLS -->
 </nav>
 <!-- /SECTION NAVIGATION -->
 </div>

@@ -1,5 +1,18 @@
-<!-- LANDING -->
 <div class="landing">
+  <!-- LANDING -->
+  <div *ngIf="loginService.checkLog" class="overlay" id="loadingOverlay">
+    <div class="loader-bars">
+      <div class="loader-bar"></div>
+      <div class="loader-bar"></div>
+      <div class="loader-bar"></div>
+      <div class="loader-bar"></div>
+      <div class="loader-bar"></div>
+      <div class="loader-bar"></div>
+      <div class="loader-bar"></div>
+      <div class="loader-bar"></div>
+    </div>
+    <div class="loading">Đang tải</div>
+  </div>
   <!-- LANDING DECORATION -->
   <div class="landing-decoration"></div>
   <!-- /LANDING DECORATION -->
@@ -77,7 +90,7 @@
           <div class="form-item">
             <!-- FORM INPUT -->
             <div class="form-input">
-              <label for="login-email">Email</label>
+              <label for="login-email">Email hoặc tên đăng nhập</label>
               <input
                 type="text"
                 id="login-email"
@@ -163,7 +176,7 @@
           <div class="form-item">
             <!-- BUTTON -->
             <button type="submit" class="button medium secondary">
-              Đăng nhập!
+              Đăng nhập
             </button>
             <!-- /BUTTON -->
           </div>
@@ -171,6 +184,15 @@
         </div>
         <!-- /FORM ROW -->
       </form>
+
+      <!-- <div class="method-control">
+        <div id="g_id_onload" data-width="80"
+						  data-client_id="829042615252-9cgbgmdc55famceanr15b20dq3kns76m" data-ux_mode="redirect"
+						  data-callback="handleCredentialResponse"
+						  data-login_uri="http://localhost:8080/oauth/loginGG">
+						</div>
+						<div class="g_id_signin" data-type="standard"></div>
+      </div>  -->
       <!-- /FORM -->
 
       <!-- LINED TEXT -->
@@ -180,7 +202,10 @@
       <!-- SOCIAL LINKS -->
       <div class="social-links">
         <!-- SOCIAL LINK -->
-        <a class="social-link youtube" href="https://accounts.google.com/gsi/select?client_id=829042615252-9cgbgmdc55famceanr15b20dq3kns76m&ux_mode=redirect&login_uri=http%3A%2F%2Flocalhost%3A8080%2Foauth%2FloginGG&ui_mode=card&as=tpphk8oJS9SGuKAiUmVKtg&g_csrf_token=2a42f6fd54be8af1&origin=http%3A%2F%2Flocalhost%3A4200">
+        <a
+          class="social-link youtube"
+          href="https://accounts.google.com/gsi/select?client_id=829042615252-9cgbgmdc55famceanr15b20dq3kns76m&ux_mode=redirect&login_uri=http%3A%2F%2Flocalhost%3A8080%2Foauth%2FloginGG&ui_mode=card&as=QAjAdohsdVGioHnu7UQhHA&g_csrf_token=97f115633e89a9e0&origin=http%3A%2F%2Flocalhost%3A52993"
+        >
           <!-- ICON FACEBOOK -->
           <svg
             class="icon-twitter"
@@ -198,14 +223,7 @@
           <!-- /ICON FACEBOOK -->
         </a>
 
-        <!-- <div class="method-control">
-          <div id="g_id_onload" data-width="80"
-            data-client_id="829042615252-9cgbgmdc55famceanr15b20dq3kns76m" data-ux_mode="redirect"
-            data-callback="handleCredentialResponse"
-            data-login_uri="http://localhost:8080/oauth/loginGG">
-          </div>
-          <div class="g_id_signin" data-type="standard"></div>
-        </div> sau deploy chạy demo lấy link thay cho href trên thẻ a-->
+        <!-- sau deploy chạy demo lấy link thay cho href trên thẻ a -->
 
         <!-- /SOCIAL LINK -->
 
@@ -288,8 +306,8 @@
             <!-- /FORM INPUT -->
             <span
               *ngIf="
-                registerForm.get('email')?.invalid &&
-                registerForm.get('email')?.touched
+                (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) ||
+                (registerForm.get('email')?.invalid && submitted)
               "
             >
               <div style="color: red">Vui lòng kiểm tra email!</div>
@@ -310,20 +328,51 @@
             <!-- /FORM INPUT -->
           </div>
           <!-- /FORM ITEM -->
-          <span
+          <!-- <span
             *ngIf="
               registerForm.get('name')?.invalid &&
               registerForm.get('name')?.touched
             "
           >
-          <div *ngIf="registerForm.get('name')?.errors" style="color: red">
-            <div *ngIf="registerForm.get('name')?.hasError('required')" style="color: red;">
+            <div *ngIf="registerForm.get('name')?.errors" style="color: red">
+              <div
+                *ngIf="registerForm.get('name')?.hasError('required')"
+                style="color: red"
+              >
+                Vui lòng nhập họ tên!
+              </div>
+              <div
+                *ngIf="registerForm.get('name')?.hasError('pattern')"
+                style="color: red"
+              >
+                Họ tên không chứa ký tự đặc biệt!
+              </div>
+            </div>
+          </span> -->
+
+          <span
+            *ngIf="
+              registerForm.get('name')?.invalid &&
+              (registerForm.get('name')?.touched || submitted)
+            "
+          >
+            <div
+              *ngIf="registerForm.get('name')?.errors"
+              style="color: red"
+            >
+              <div
+                *ngIf="registerForm.get('name')?.hasError('required')"
+                style="color: red"
+              >
               Vui lòng nhập họ tên!
-            </div>
-            <div *ngIf="registerForm.get('name')?.hasError('pattern')" style="color: red;">
+              </div>
+              <div
+                *ngIf="registerForm.get('name')?.getError('pattern')"
+                style="color: red"
+              >
               Họ tên không chứa ký tự đặc biệt!
+              </div>
             </div>
-          </div>
           </span>
         </div>
         <!-- /FORM ROW -->
@@ -349,10 +398,9 @@
               </span>
             </div>
             <!-- /FORM INPUT -->
-            <span
+            <!-- <span
               *ngIf="
-                registerForm.get('password')?.invalid &&
-                registerForm.get('password')?.touched
+                (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) || 
               "
             >
               <div *ngIf="registerForm.get('password')?.errors" style="color: red">
@@ -360,8 +408,34 @@
 									Vui lòng nhập mật khẩu
 								</div>
                 <div *ngIf="registerForm.get('password')?.hasError('pattern')" style="color: red;">
-									Mật khẩu có độ dài từ 4-20 ký tự và có ít nhất một ký tự đặc biệt: !@#\$%^&\*
+									Mật khẩu có độ dài từ 4-20 ký tự và có ít nhất một ký tự đặc biệt: '!&#64;#\$%^&\*'
 								</div>
+              </div>
+            </span> -->
+
+            <span
+              *ngIf="
+                registerForm.get('password')?.invalid &&
+                (registerForm.get('password')?.touched || submitted)
+              "
+            >
+              <div
+                *ngIf="registerForm.get('password')?.errors"
+                style="color: red"
+              >
+                <div
+                  *ngIf="registerForm.get('password')?.hasError('required')"
+                  style="color: red"
+                >
+                  Vui lòng nhập mật khẩu
+                </div>
+                <div
+                  *ngIf="registerForm.get('password')?.getError('pattern')"
+                  style="color: red"
+                >
+                  Mật khẩu có độ dài từ 4-20 ký tự và có ít nhất một ký tự đặc
+                  biệt: '!&#64;#\$%^&\*'
+                </div>
               </div>
             </span>
           </div>
@@ -392,8 +466,9 @@
             </div>
             <span
               *ngIf="
-                registerForm.get('rePassword')?.invalid &&
-                registerForm.get('rePassword')?.touched
+                (registerForm.get('rePassword')?.invalid &&
+                  registerForm.get('rePassword')?.touched) ||
+                (registerForm.get('rePassword')?.invalid && submitted)
               "
             >
               <div style="color: red">Vui lòng nhập xác nhận mật khẩu!</div>
@@ -409,9 +484,7 @@
           <!-- FORM ITEM -->
           <div class="form-item">
             <!-- BUTTON -->
-            <button class="button medium primary" type="submit">
-              Đăng ký!
-            </button>
+            <button class="button medium primary" type="submit">Đăng ký</button>
             <!-- /BUTTON -->
           </div>
           <!-- /FORM ITEM -->

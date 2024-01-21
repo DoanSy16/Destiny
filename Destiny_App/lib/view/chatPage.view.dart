@@ -3,18 +3,20 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get_navigation/get_navigation.dart';
 import 'package:login_signup/models/SocketManager%20.dart';
+// import 'package:login_signup/models/SocketManager.dart';
 import 'package:login_signup/models/UserModel.dart';
 import 'package:login_signup/utils/gobal.colors.dart';
 import 'package:login_signup/view/bottomnavbar.dart';
 import 'package:login_signup/view/login_signup_screen.dart';
 import 'package:login_signup/view/screens/message.view.dart';
+import 'package:login_signup/view/widgets/ImageChat.dart';
 import 'package:login_signup/view/widgets/chat/chat.dart';
 import 'package:login_signup/view/widgets/chat/chatSample.dart';
 import 'package:login_signup/view/widgets/chat/chatBottomSheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({super.key});
+  const ChatPage({Key? key}) : super(key: key);
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -23,19 +25,13 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   late SocketManager socketManager = SocketManager();
   late UserModel userModel = socketManager.userChatPage;
+
   @override
   void initState() {
     super.initState();
     SharedPreferences.getInstance().then((prefs) {
       userModel = socketManager.userChatPage;
-
-      // Check if userModel is not null before accessing its properties
-      // if (userModel != null) {
-      //   print('fullname: ' + userModel.fullname.toString());
-      //   print('avatar: ' + userModel.avatar.toString());
-      // } else {
-      //   print('userModel is null');
-      // }
+      socketManager.selectedIndex = 2;
     });
   }
 
@@ -50,7 +46,9 @@ class _ChatPageState extends State<ChatPage> {
             leading: BackButton(
               onPressed: () {
                 socketManager.userChatPage = new UserModel();
-                BottomNavBar.navKey.currentState?.setSelectedIndex(2);
+                runApp(GetMaterialApp(
+                  home: BottomNavBar(),
+                ));
               },
             ),
             leadingWidth: 30,
@@ -76,51 +74,45 @@ class _ChatPageState extends State<ChatPage> {
             actions: [
               Padding(
                 padding: EdgeInsets.only(right: 25),
-                child: Icon(
-                  Icons.video_call,
-                  size: 30,
-                  color: GlobalColors.mainColor,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 25),
                 child: PopupMenuButton(
                   itemBuilder: (context) => [
                     PopupMenuItem(
-                        onTap: () {
-                          runApp(GetMaterialApp(
-                            home: HomeScreen(),
-                          ));
-                        },
-                        child: Row(
-                          children: [
-                            // Icon(Icons.logout),
-                            Padding(
-                                padding: EdgeInsets.only(left: 10.0),
-                                child: Text("Tất cả ảnh"))
-                          ],
-                        ))
+                      onTap: () {
+                        socketManager.userIdImage = userModel.user_id;
+                        runApp(GetMaterialApp(
+                          home: ImageChat(),
+                        ));
+                      },
+                      child: Row(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(left: 10.0),
+                            child: Text("Tất cả ảnh"),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                   child: Icon(
                     Icons.more_vert,
                     color: GlobalColors.mainColor,
                   ),
                 ),
-              )
-              // Padding(
-              //   padding: EdgeInsets.only(right: 25),
-              //   child: Icon(
-              //     Icons.more_vert,
-              //     color: GlobalColors.mainColor,
-              //   ),
-              // ),
+              ),
             ],
           ),
         ),
       ),
-      body: ListView(
-          padding: EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 80),
-          children: [ChatSample()]),
+      body: Padding(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, 80),
+        child: ListView(
+          children: [
+            Expanded(
+              child: ChatSample(),
+            ),
+          ],
+        ),
+      ),
       bottomSheet: ChatBottomSheet(),
     );
   }

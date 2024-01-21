@@ -25,16 +25,13 @@ class _ChatSampleState extends State<ChatSample> {
   bool isLoading = false;
 
   UserModel userModel = new UserModel();
-  // late ScrollController _scrollController = ScrollController();
 
-  // late ScrollController _scrollController;
   @override
   void initState() {
     super.initState();
-    // _scrollController = ScrollController();
+
     socketManager.updateListMessages([]);
     loadData();
-    // socketManager.scrollController.addListener(socketManager.scrollToBottom);
   }
 
   Future<void> loadEarlierMessages() async {
@@ -110,12 +107,10 @@ class _ChatSampleState extends State<ChatSample> {
         // print('data: ' + o['id'].toString());
         listModel.add(socketManager.messagesModel(o));
       }
-      print("size: " + listModel.length.toString());
+
       socketManager.listMessages = listModel;
       socketManager.updateListMessages(socketManager.listMessages);
 
-      print("aaaaaaaaaaaa" + socketManager.listMessages.length.toString());
-      // return socketManager.listMessages;
       setState(() {
         socketManager.scrollController
             .addListener(socketManager.scrollToBottom);

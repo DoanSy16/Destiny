@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, Renderer2 } from '@angular/core';
 
 import { CookieService } from 'ngx-cookie-service';
 import { Router, NavigationEnd } from '@angular/router';
@@ -8,6 +8,7 @@ import { MessageService } from '../service/message.service';
 import { ProfileService } from '../service/profile.service';
 import { ModalService } from '../service/modal.service';
 import { MessageType } from '../Model/NotifyModel';
+import { UIServiveService } from '../service/ui-servive.service';
 import '../../../assets/toast/main.js';
 declare var toast: any;
 @Component({
@@ -16,6 +17,7 @@ declare var toast: any;
   styleUrls: [
     `../../css/vendor/bootstrap.min.css`,
     `../../css/styles.min.css`,
+    // `../../css/dark/dark.min.css`,
     `../../css/vendor/simplebar.css`,
     `../../css/vendor/tiny-slider.css`,
     './navigation.component.css'
@@ -26,11 +28,17 @@ export class NavigationComponent implements OnInit {
   userDisplayName = '';
   avatar = '';
   activeMenuItem: string = '';
-
-
+  chatUserId: any;
+  searchTerm: string = '';
+  listSearch: any[] = [];
+  listSearchPost: any[] = [];
+  listSearchHashTag: any[] = [];
   ngOnInit() {
     this.userDisplayName = this.cookieService.get('full_name');
     this.avatar = this.cookieService.get("avatar");
+    this.chatUserId = parseInt((localStorage.getItem("chatUserId") + '')?.trim());
+    this.uiServiveService.loadMode();
+    this.updateActiveMenuItem();
   }
 
   constructor(
@@ -39,14 +47,31 @@ export class NavigationComponent implements OnInit {
     private router: Router,
     public messageService: MessageService,
     public profileService: ProfileService,
-    public modalService: ModalService
+    public modalService: ModalService,
+    private el: ElementRef,
+    private renderer: Renderer2,
+    private uiServiveService: UIServiveService
   ) {
     this.router.events.subscribe((event) => {
+      console
+      this.chatUserId = parseInt((localStorage.getItem("chatUserId") + '')?.trim());
       if (event instanceof NavigationEnd) {
         // Đã chuyển đến trang mới, thực hiện cập nhật menu active
         this.updateActiveMenuItem();
       }
     });
+  }
+
+  async search() {
+    let user_id: number | null = null;
+  
+    const storedUserId = localStorage.getItem('chatUserId');
+    if (storedUserId !== null) {
+      user_id = parseInt(storedUserId, 10);
+      this.listSearch = await this.modalService.searchApi(user_id, this.searchTerm);
+      this.listSearchPost = await this.modalService.searchPostApi(this.searchTerm, 'content');
+      this.listSearchHashTag = await this.modalService.searchPostApi(this.searchTerm, 'hashtag');
+    }
   }
 
   isLogin() {
@@ -57,7 +82,7 @@ export class NavigationComponent implements OnInit {
     return this.loginService.logout();
   }
   checkType(type: any) {
-   
+
     if (type == 'COMMENT') {
       return 'COMMENT';
     }
@@ -73,6 +98,12 @@ export class NavigationComponent implements OnInit {
     if (type == 'REPCOMMENT') {
       return 'REPCOMMENT';
     }
+    if (type == 'MENTION') {
+      return 'MENTION';
+    }
+    if (type == 'POST') {
+      return 'POST';
+    }
     return null;
   }
   addFollow(id: number) {
@@ -85,6 +116,7 @@ export class NavigationComponent implements OnInit {
     });
   }
   updateActiveMenuItem() {
+    // console.warn("this.activeMenuItem: " + this.activeMenuItem)
     const currentUrl = this.router.url;
     // Xác định menu item active dựa trên URL hiện tại
     // Ví dụ: nếu có '/home' trong URL, đặt activeMenuItem thành 'home'
@@ -109,5 +141,22 @@ export class NavigationComponent implements OnInit {
     }
   }
 
+  handleLinkClick(event: Event): void {
+    // Xử lý logic khi liên kết được nhấp
+    // alert('Link clicked!'+ event);
+
+    const elementsWithPaddSliderClass = document.querySelectorAll('.padd-slider');
+
+    // alert(elementsWithPaddSliderClass.length);
+    elementsWithPaddSliderClass.forEach(element => {
+      this.renderer.removeAttribute(element, 'style'); // Xóa tất cả các thuộc tính style, bạn có thể thay đổi tùy ý
+    });
+
+    // Add your custom logic here
+  }
+
+  reloadPage(){
+    location.reload();
+  }
 
 }

@@ -352,13 +352,18 @@ class _FollowViewState extends State<FollowView> {
                                         SizedBox(
                                           height: 5,
                                         ),
-                                        Text(
-                                          following![i]['username'],
-                                          style: TextStyle(
-                                              color: Colors.grey[600]),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
+                                        Container(
+                                          constraints:
+                                              BoxConstraints(maxWidth: 100),
+                                          child: Text(
+                                            following![i]['username'],
+                                            style: TextStyle(
+                                                color: Colors.grey[600]),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        )
+                                        //
                                       ],
                                     )
                                   ],
@@ -445,13 +450,17 @@ class _FollowViewState extends State<FollowView> {
                                         SizedBox(
                                           height: 5,
                                         ),
-                                        Text(
-                                          follower![i]['username'],
-                                          style: TextStyle(
-                                              color: Colors.grey[600]),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
+                                        Container(
+                                          constraints:
+                                              BoxConstraints(maxWidth: 100),
+                                          child: Text(
+                                            follower![i]['username'],
+                                            style: TextStyle(
+                                                color: Colors.grey[600]),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        )
                                       ],
                                     )
                                   ],

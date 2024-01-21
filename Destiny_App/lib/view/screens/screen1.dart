@@ -26,6 +26,7 @@ import 'package:flutter/cupertino.dart';
 // import 'package:flutter/material.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:flutter/services.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class Screen1 extends StatefulWidget {
   const Screen1({super.key});
@@ -47,13 +48,13 @@ class _Screen1State extends State<Screen1> {
   List? listPost;
   String? avatarUser;
   int currentPage = 1;
-  Map<int, bool>? mapIntersted;
+
   @override
   void initState() {
     super.initState();
     getConnectivity();
     this.getData();
-    this.checkPost();
+    // this.checkPost();
     _scrollController.addListener(_onScroll);
   }
 
@@ -73,6 +74,77 @@ class _Screen1State extends State<Screen1> {
         setState(() => isAlertSet = false);
       }
     });
+  }
+
+  void reload(int postid, int page) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var value = await prefs.getString('token');
+    var headers = {
+      'Authorization': ' Bearer $value',
+      'Content-Type':
+          'application/x-www-form-urlencoded', // Điều này phụ thuộc vào yêu cầu cụ thể của máy chủ
+    };
+    var id_user = await prefs.getInt('id');
+
+    http.Response response;
+
+    response = await http.post(
+        Uri.parse(ApiEndPoints.baseUrl + "v1/user/reload/post"),
+        headers: headers,
+        body: {'post_id': postid.toString(), 'page': page.toString()});
+  }
+
+  Future<void> interested(int postId, int i, bool data, int userId) async {
+    var page = (i / 5).ceil();
+
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      var value = await prefs.getString('token');
+      var headers = {
+        'Authorization': 'Bearer $value',
+        'Content-Type': 'application/json',
+      };
+      var id_user = await prefs.getInt('id');
+
+      http.Response response;
+
+      if (data == true) {
+        response = await http.post(
+          Uri.parse(ApiEndPoints.baseUrl + "v1/user/update/interested/post"),
+          headers: headers,
+          body: postId.toString(),
+        );
+
+        if (response.statusCode == 200) {
+          // Cập nhật dữ liệu nếu yêu cầu thành công
+          reload(postId, page);
+          setState(() {
+            data = false;
+            mapInterested?[postId] = false;
+          });
+        }
+      } else {
+        // Xử lý khi người dùng chưa quan tâm và muốn thêm quan tâm
+        socketManager.sendNotify(
+          ' ',
+          postId,
+          userId,
+          'INTERESTED',
+          socketManager.repCmtId,
+        );
+
+        reload(postId, page);
+        setState(() {
+          data = true;
+          mapInterested?[postId] = true;
+          // print(data);
+        });
+      }
+    } catch (error) {
+      // Xử lý khi có lỗi xảy ra trong quá trình gửi yêu cầu đến máy chủ
+      // Có thể hiển thị thông báo lỗi, hoặc xử lý trạng thái dữ liệu cục bộ tại đây
+      print('Error: $error');
+    }
   }
 
   void showDialogBox() {
@@ -114,31 +186,31 @@ class _Screen1State extends State<Screen1> {
     }
   }
 
-  void checkPost() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    var value = await prefs.getString('token');
+  // void checkPost() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   var value = await prefs.getString('token');
 
-    var headers = {
-      'Authorization': 'Bearer $value',
-      'Content-Type':
-          'application/json', // Điều này phụ thuộc vào yêu cầu cụ thể của máy chủ
-    };
+  //   var headers = {
+  //     'Authorization': 'Bearer $value',
+  //     'Content-Type':
+  //         'application/json', // Điều này phụ thuộc vào yêu cầu cụ thể của máy chủ
+  //   };
 
-    var response = await http.post(
-      Uri.parse(ApiEndPoints.baseUrl + "v1/user/load/checkpost"),
-      headers: headers,
-      body: "1", // Truyền số trang cần tải
-    );
+  //   // var response = await http.post(
+  //   //   Uri.parse(ApiEndPoints.baseUrl + "v1/user/load/checkpost"),
+  //   //   headers: headers,
+  //   //   body: "1", // Truyền số trang cần tải
+  //   // );
 
-    if (response.statusCode == 200) {
-      if (response.statusCode == 200) {
-        var responseData = response.body;
-        if (responseData == 'success') {
-          SuccessfulRegistrationDialog(); // Hiển thị dialog
-        }
-      }
-    }
-  }
+  //   if (response.statusCode == 200) {
+  //     if (response.statusCode == 200) {
+  //       var responseData = response.body;
+  //       if (responseData == 'success') {
+  //         SuccessfulRegistrationDialog(); // Hiển thị dialog
+  //       }
+  //     }
+  //   }
+  // }
 
   void _loadMorePosts() async {
     setState(() {
@@ -210,129 +282,133 @@ class _Screen1State extends State<Screen1> {
   void _showCommentDialog(int postId, int userId) {
     apiManager.fetchComments(postId);
     int tempCommentId;
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return SimpleDialog(
-          title: Text('Bình luận'),
-          children: [
-            Container(
-              height: 500,
-              width: MediaQuery.of(context).size.width - 40,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: StreamBuilder<List<dynamic>>(
-                      stream: socketManager.commentStream,
-                      // future: _fetchComments(postId),
-                      builder:
-                          (BuildContext context, AsyncSnapshot<List> snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        } else if (snapshot.hasData) {
-                          return ListView.builder(
-                            itemCount: snapshot.data!.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              var comment = snapshot.data![index];
-                              tempCommentId = comment[0];
-                              bool hasReplies = true;
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ListTile(
-                                    leading: CircleAvatar(
-                                      backgroundImage: NetworkImage(comment[9]),
-                                    ),
-                                    title: Text(comment[7]),
-                                    subtitle: Text(comment[5]),
-                                    // Hiển thị nội dung bình luận
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      TextButton(
-                                        onPressed: () {
-                                          socketManager.repCmtId = comment[0];
-                                        },
-                                        child: Text(comment[11] != null
-                                            ? comment[11].toString() +
-                                                ' Trả lời'
-                                            : 0.toString() + ' Trả lời'),
+        return Dialog(
+          child: Stack(
+            children: [
+              Container(
+                height: 500,
+                width: MediaQuery.of(context).size.width - 40,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: StreamBuilder<List<dynamic>>(
+                        stream: socketManager.commentStream,
+                        builder: (BuildContext context,
+                            AsyncSnapshot<List> snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          } else if (snapshot.hasData) {
+                            return ListView.builder(
+                              itemCount: snapshot.data!.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                var comment = snapshot.data![index];
+                                tempCommentId = comment[0];
+                                bool hasReplies = true;
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    ListTile(
+                                      leading: CircleAvatar(
+                                        backgroundImage:
+                                            NetworkImage(comment[9]),
                                       ),
-                                      if (hasReplies)
+                                      title: Text(comment[7]),
+                                      subtitle: Text(comment[5]),
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
                                         TextButton(
                                           onPressed: () {
-                                            _showRepliesBottomSheet(
-                                                postId, comment[0]);
+                                            socketManager.repCmtId = comment[0];
                                           },
-                                          child: Text('Xem thêm'),
+                                          child: Text(
+                                            comment[11] != null
+                                                ? comment[11].toString() +
+                                                    ' Trả lời'
+                                                : '0 Trả lời',
+                                          ),
                                         ),
-                                    ],
-                                  ),
-                                  Divider(), // Thêm đường phân cách giữa các comment
-                                ],
-                              );
-                            },
-                          );
-                        } else if (snapshot.hasError) {
-                          return Text('Đã xảy ra lỗi: ${snapshot.error}');
-                        }
-                        return SizedBox(); // Trường hợp không có dữ liệu
-                      },
+                                        if (hasReplies)
+                                          TextButton(
+                                            onPressed: () {
+                                              _showRepliesBottomSheet(
+                                                  postId, comment[0]);
+                                            },
+                                            child: Text('Xem thêm'),
+                                          ),
+                                      ],
+                                    ),
+                                    Divider(),
+                                  ],
+                                );
+                              },
+                            );
+                          } else if (snapshot.hasError) {
+                            return Text('Đã xảy ra lỗi: ${snapshot.error}');
+                          }
+                          return SizedBox();
+                        },
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: commentController,
-                            decoration: InputDecoration(
-                              hintText: 'Nhập bình luận của bạn...',
-                              // border: OutlineInputBorder(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 5),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: commentController,
+                              decoration: InputDecoration(
+                                hintText: 'Nhập bình luận của bạn...',
+                              ),
                             ),
-                            // Controller và logic để lưu nội dung của TextField
                           ),
-                        ),
-                        SizedBox(width: 10),
-                        ElevatedButton(
-                          onPressed: () {
-                            // tempCommentId = comment[0];
-                            addComment(commentController.text.toString(),
-                                postId, userId, socketManager.repCmtId);
-                            commentController.clear();
-                          },
-                          child: Text('Gửi'),
-                        ),
-                      ],
+                          SizedBox(width: 10),
+                          ElevatedButton(
+                            onPressed: () {
+                              addComment(
+                                commentController.text.toString(),
+                                postId,
+                                userId,
+                                socketManager.repCmtId,
+                              );
+                              commentController.clear();
+                            },
+                            child: Text('Gửi'),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            Positioned(
-              top: 10,
-              right: 5,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.of(context).pop();
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.grey.withOpacity(0.3),
-                  ),
-                  padding: EdgeInsets.all(5),
-                  child: Icon(Icons.close),
+                  ],
                 ),
               ),
-            ),
-          ],
+              Positioned(
+                top: 5,
+                right: 5,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    padding: EdgeInsets.all(5),
+                    child: Icon(Icons.close),
+                  ),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -400,7 +476,6 @@ class _Screen1State extends State<Screen1> {
   }
 
   void sharePublic(int post_id, int toUser) {
-    print("Share rồi");
     socketManager.sendNotify(
         ' ', post_id, toUser, "SHARE", socketManager.repCmtId);
   }
@@ -459,22 +534,19 @@ class _Screen1State extends State<Screen1> {
     }
   }
 
+  Map<int, bool>? mapInterested;
   Future<bool> checkInterested(int postId, List<dynamic> interested) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var currentUserId = await prefs.getInt('id');
-    Map<int, bool> mapInterested = {};
-    mapInterested[postId] = false;
+    mapInterested?[postId] = false;
 
-    // Các hoạt động bất đồng bộ
-    await Future.forEach(interested, (user) {
+    for (var user in interested) {
       if (user['user_id'] == currentUserId) {
-        mapInterested[postId] = true;
+        mapInterested?[postId] = true;
         return true;
       }
-      return false;
-    });
-
-    return mapInterested[postId] ?? false;
+    }
+    return false;
   }
 
   void showDialogReportAccount(int user_id) {
@@ -616,6 +688,9 @@ class _Screen1State extends State<Screen1> {
     );
   }
 
+  int checkRequesNum = 0;
+  bool checkRequest = true;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -626,7 +701,7 @@ class _Screen1State extends State<Screen1> {
               MyAppBar(),
               Container(
                 padding: EdgeInsets.only(top: 0),
-                height: 90,
+                height: 60,
                 width: MediaQuery.of(context).size.width,
                 color: Colors.white,
                 child: Column(children: [
@@ -657,91 +732,6 @@ class _Screen1State extends State<Screen1> {
                       )
                     ],
                   ),
-                  // Text(stringResponse.toString()),
-                  Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        margin: EdgeInsets.only(top: 0),
-                        alignment: Alignment.center,
-                        // color: Colors.black,
-                        height: 40,
-                        width: MediaQuery.of(context).size.width * 0.33,
-                        child: Container(
-                          width: 100,
-                          child: Row(
-                            children: [
-                              Container(
-                                alignment: Alignment.center,
-                                width: 30,
-                                child: Icon(
-                                  Icons.live_tv,
-                                  color: Colors.red,
-                                ),
-                              ),
-                              Container(
-                                  alignment: Alignment.center,
-                                  width: 70,
-                                  child: Text("Trực tiếp")),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Container(
-                        margin: EdgeInsets.only(top: 0),
-                        alignment: Alignment.center,
-                        // color: Colors.black,
-                        height: 40,
-                        width: MediaQuery.of(context).size.width * 0.33,
-                        child: Container(
-                          width: 100,
-                          child: Row(
-                            children: [
-                              Container(
-                                alignment: Alignment.center,
-                                width: 30,
-                                child: Icon(
-                                  Icons.photo,
-                                  color: Colors.green,
-                                ),
-                              ),
-                              Container(
-                                  alignment: Alignment.center,
-                                  width: 30,
-                                  child: Text("Ảnh")),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Container(
-                        margin: EdgeInsets.only(top: 0),
-                        alignment: Alignment.center,
-                        // color: Colors.black,
-                        height: 40,
-                        width: MediaQuery.of(context).size.width * 0.33,
-                        child: Container(
-                          width: 100,
-                          child: Row(
-                            children: [
-                              Container(
-                                alignment: Alignment.center,
-                                width: 30,
-                                child: Icon(
-                                  Icons.room,
-                                  color: const Color.fromARGB(255, 2, 124, 224),
-                                ),
-                              ),
-                              Container(
-                                  alignment: Alignment.center,
-                                  width: 45,
-                                  child: Text("Vị trí")),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
                 ]),
               ),
               Expanded(
@@ -876,58 +866,77 @@ class _Screen1State extends State<Screen1> {
                                           maxWidth:
                                               MediaQuery.of(context).size.width,
                                         ),
-                                        child: Text(
-                                          listPost![i]['content'],
-                                          style: TextStyle(fontSize: 15),
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal:
+                                                  20.0), // Điều chỉnh giá trị theo nhu cầu
+                                          child: Text(
+                                            listPost![i]['content'],
+                                            style: TextStyle(fontSize: 15),
+                                          ),
                                         ),
                                       ),
+                                      // ConstrainedBox(
+                                      //   constraints: BoxConstraints(
+                                      //     maxWidth:
+                                      //         MediaQuery.of(context).size.width,
+                                      //   ),
+                                      //   child: Text(
+                                      //     listPost![i]['content'],
+                                      //     style: TextStyle(fontSize: 15),
+                                      //   ),
+                                      // ),
                                       SizedBox(
                                         height: 10,
                                       ),
-                                      ConstrainedBox(
-                                        constraints: BoxConstraints(
-                                          minHeight: 150,
-                                          minWidth: 150,
-                                          maxHeight: 350.0,
-                                          maxWidth:
-                                              MediaQuery.of(context).size.width,
-                                        ),
-                                        child: CarouselSlider(
-                                          items: (listPost![i]['images']
-                                                      as List<dynamic>?)
-                                                  ?.map<Widget>((imageData) {
-                                                if (imageData is String) {
-                                                  return ClipRRect(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            6),
-                                                    child: Image.network(
-                                                      imageData,
-                                                      height: 200,
-                                                      width: 350,
-                                                      fit: BoxFit.cover,
-                                                    ),
-                                                  );
-                                                }
-                                                return SizedBox
-                                                    .shrink(); // Nếu dữ liệu hình ảnh không hợp lệ, hiển thị Widget trống
-                                              })?.toList() ??
-                                              [],
-                                          options: CarouselOptions(
-                                              autoPlay: false,
-                                              enableInfiniteScroll: false,
-                                              enlargeCenterPage: true,
-                                              height: 320),
-                                        ),
-                                      ),
+                                      listPost![i]['images'].length == 0
+                                          ? SizedBox(height: 10)
+                                          : ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                minHeight: 150,
+                                                minWidth: 150,
+                                                maxHeight: 350.0,
+                                                maxWidth: MediaQuery.of(context)
+                                                    .size
+                                                    .width,
+                                              ),
+                                              child: CarouselSlider(
+                                                items: (listPost![i]['images']
+                                                            as List<dynamic>?)
+                                                        ?.map<Widget>(
+                                                            (imageData) {
+                                                      if (imageData is String) {
+                                                        return ClipRRect(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(6),
+                                                          child: Image.network(
+                                                            imageData,
+                                                            height: 200,
+                                                            width: 350,
+                                                            fit: BoxFit.cover,
+                                                          ),
+                                                        );
+                                                      }
+                                                      return SizedBox.shrink();
+                                                    })?.toList() ??
+                                                    [],
+                                                options: CarouselOptions(
+                                                  autoPlay: false,
+                                                  enableInfiniteScroll: false,
+                                                  enlargeCenterPage: true,
+                                                  height: 320,
+                                                ),
+                                              ),
+                                            )
                                     ],
                                   )
                                 : Container(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 15,
+                                        vertical:
+                                            15), // Điều chỉnh giá trị theo nhu cầu
                                     color: Colors.white,
-                                    padding: EdgeInsets.only(
-                                        // top: 4,
-                                        bottom:
-                                            10), // Thêm padding để tạo khoảng cách giữa các bài viết
                                     margin: EdgeInsets.only(bottom: 10),
                                     child: Column(
                                       children: [
@@ -942,18 +951,7 @@ class _Screen1State extends State<Screen1> {
                                                       left: 10, top: 10),
                                                   child: InkWell(
                                                     onTap: () async {
-                                                      SharedPreferences prefs =
-                                                          await SharedPreferences
-                                                              .getInstance();
-
-                                                      await prefs.setInt(
-                                                          'id',
-                                                          listPost![i][
-                                                                  'postEntityProfile']
-                                                              ['user_id']);
-                                                      runApp(GetMaterialApp(
-                                                        home: ProfileView(),
-                                                      ));
+                                                      // ...
                                                     },
                                                     child: CircleAvatar(
                                                       backgroundImage:
@@ -979,57 +977,6 @@ class _Screen1State extends State<Screen1> {
                                                     ))
                                               ],
                                             ),
-                                            Container(
-                                              margin:
-                                                  EdgeInsets.only(right: 10),
-                                              child: PopupMenuButton(
-                                                itemBuilder: (context) => [
-                                                  PopupMenuItem(
-                                                    onTap: () {
-                                                      showDialogReportPost(
-                                                          listPost![i]
-                                                              ['post_id']);
-                                                    },
-                                                    child: Row(
-                                                      children: [
-                                                        Icon(Icons.report),
-                                                        Padding(
-                                                          padding:
-                                                              EdgeInsets.only(
-                                                                  left: 10.0),
-                                                          child: Text(
-                                                              "Báo cáo bài viết"),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  PopupMenuItem(
-                                                    onTap: () {
-                                                      showDialogReportAccount(
-                                                          listPost![i]
-                                                              ['user_id']);
-                                                    },
-                                                    child: Row(
-                                                      children: [
-                                                        Icon(Icons
-                                                            .report_off_outlined),
-                                                        Padding(
-                                                          padding:
-                                                              EdgeInsets.only(
-                                                                  left: 10.0),
-                                                          child: Text(
-                                                              "Báo cáo tài khoản"),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                                child: Icon(
-                                                  Icons.more_horiz,
-                                                  color: GlobalColors.mainColor,
-                                                ),
-                                              ),
-                                            ),
                                           ],
                                         ),
                                         SizedBox(
@@ -1043,61 +990,77 @@ class _Screen1State extends State<Screen1> {
                                                     .size
                                                     .width,
                                               ),
-                                              child: Text(
-                                                listPost![i]
-                                                        ['postEntityProfile']
-                                                    ['content'],
-                                                style: TextStyle(fontSize: 15),
+                                              child: Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal:
+                                                        20.0), // Điều chỉnh giá trị theo nhu cầu
+                                                child: Text(
+                                                  listPost![i]
+                                                          ['postEntityProfile']
+                                                      ['content'],
+                                                  style:
+                                                      TextStyle(fontSize: 15),
+                                                ),
                                               ),
                                             ),
                                             SizedBox(
                                               height: 10,
                                             ),
-                                            ConstrainedBox(
-                                              constraints: BoxConstraints(
-                                                minHeight: 150,
-                                                minWidth: 150,
-                                                maxHeight: 350.0,
-                                                maxWidth: MediaQuery.of(context)
-                                                    .size
-                                                    .width,
-                                              ),
-                                              child: CarouselSlider(
-                                                items:
-                                                    (listPost![i]['postEntityProfile']
-                                                                    ['images']
-                                                                as List<
-                                                                    dynamic>?)
-                                                            ?.map<Widget>(
-                                                                (imageData) {
-                                                          if (imageData
-                                                              is String) {
-                                                            return ClipRRect(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          6),
-                                                              child:
-                                                                  Image.network(
-                                                                imageData,
-                                                                height: 200,
-                                                                width: 350,
-                                                                fit: BoxFit
-                                                                    .cover,
-                                                              ),
-                                                            );
-                                                          }
-                                                          return SizedBox
-                                                              .shrink(); // Nếu dữ liệu hình ảnh không hợp lệ, hiển thị Widget trống
-                                                        })?.toList() ??
-                                                        [],
-                                                options: CarouselOptions(
-                                                    autoPlay: false,
-                                                    enableInfiniteScroll: false,
-                                                    enlargeCenterPage: true,
-                                                    height: 320),
-                                              ),
-                                            ),
+                                            (listPost![i]['postEntityProfile']
+                                                            ['images'])
+                                                        .length ==
+                                                    0
+                                                ? SizedBox(
+                                                    height: 10,
+                                                  )
+                                                : ConstrainedBox(
+                                                    constraints: BoxConstraints(
+                                                      minHeight: 150,
+                                                      minWidth: 150,
+                                                      maxHeight: 350.0,
+                                                      maxWidth:
+                                                          MediaQuery.of(context)
+                                                              .size
+                                                              .width,
+                                                    ),
+                                                    child: CarouselSlider(
+                                                      items: (listPost![i][
+                                                                          'postEntityProfile']
+                                                                      ['images']
+                                                                  as List<
+                                                                      dynamic>?)
+                                                              ?.map<Widget>(
+                                                                  (imageData) {
+                                                            if (imageData
+                                                                is String) {
+                                                              return ClipRRect(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            6),
+                                                                child: Image
+                                                                    .network(
+                                                                  imageData,
+                                                                  height: 200,
+                                                                  width: 350,
+                                                                  fit: BoxFit
+                                                                      .cover,
+                                                                ),
+                                                              );
+                                                            }
+                                                            return SizedBox
+                                                                .shrink(); // Nếu dữ liệu hình ảnh không hợp lệ, hiển thị Widget trống
+                                                          })?.toList() ??
+                                                          [],
+                                                      options: CarouselOptions(
+                                                          autoPlay: false,
+                                                          enableInfiniteScroll:
+                                                              false,
+                                                          enlargeCenterPage:
+                                                              true,
+                                                          height: 320),
+                                                    ),
+                                                  )
                                           ],
                                         )
                                       ],
@@ -1118,31 +1081,50 @@ class _Screen1State extends State<Screen1> {
                                     child: Row(
                                       children: [
                                         Container(
-                                            alignment: Alignment.center,
-                                            width: 30,
-                                            child: GestureDetector(
-                                              onTap: () {},
-                                              child: Container(
-                                                child: Icon(
-                                                  checkInterested(
-                                                              listPost![i]
-                                                                  ['post_id'],
-                                                              listPost![i][
-                                                                  'userInterested']) ==
-                                                          true
-                                                      ? Icons.favorite
-                                                      : Icons.favorite_border,
-                                                  color: checkInterested(
-                                                              listPost![i]
-                                                                  ['post_id'],
-                                                              listPost![i][
-                                                                  'userInterested']) ==
-                                                          true
-                                                      ? Colors.red
-                                                      : null,
-                                                ),
-                                              ),
-                                            )),
+                                          alignment: Alignment.center,
+                                          width: 30,
+                                          child: Container(
+                                            child: FutureBuilder<bool>(
+                                              future: checkInterested(
+                                                  listPost![i]['post_id'],
+                                                  listPost![i]
+                                                      ['userInterested']),
+                                              builder: (context, snapshot) {
+                                                if (snapshot.connectionState ==
+                                                    ConnectionState.waiting) {
+                                                  return CircularProgressIndicator(); // Hiển thị khi đang chờ dữ liệu
+                                                } else {
+                                                  if (snapshot.hasError) {
+                                                    return Text(
+                                                        'Error: ${snapshot.error}'); // Xử lý lỗi nếu có
+                                                  } else {
+                                                    // Hiển thị biểu tượng dựa trên giá trị trả về từ checkInterested
+                                                    return InkWell(
+                                                      onTap: () async {
+                                                        var temp =
+                                                            snapshot.data;
+                                                        this.interested(
+                                                            listPost![i]
+                                                                ['post_id'],
+                                                            i,
+                                                            temp!,
+                                                            listPost![i]
+                                                                ['user_id']);
+                                                      },
+                                                      child: Icon(
+                                                        snapshot.data == true
+                                                            ? Icons.favorite
+                                                            : Icons
+                                                                .favorite_border,
+                                                        color: Colors.red,
+                                                      ),
+                                                    );
+                                                  }
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                        ),
                                         Container(
                                             alignment: Alignment.center,
                                             width: 20,
@@ -1267,7 +1249,7 @@ class _Screen1State extends State<Screen1> {
                         ? Container(
                             color: GlobalColors.loadColors1,
                             child: Center(
-                              child: SpinKitWave(
+                              child: LoadingAnimationWidget.staggeredDotsWave(
                                 color: Colors.white,
                                 size: 50.0,
                               ),
@@ -1283,7 +1265,7 @@ class _Screen1State extends State<Screen1> {
               ? Container(
                   color: Colors.black.withOpacity(0.5),
                   child: Center(
-                    child: SpinKitWave(
+                    child: LoadingAnimationWidget.staggeredDotsWave(
                       color: Colors.white,
                       size: 50.0,
                     ),
